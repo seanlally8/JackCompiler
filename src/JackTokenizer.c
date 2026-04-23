@@ -18,6 +18,7 @@ int advance(char *token, FILE *file) {
     memset(buffer, 0, 200);
     fgets(buffer, 200, file);
     for (int i = 0; i < (int)strlen(buffer); i++) {
+      printf("%s\n", buffer);
       if (comment_check == 1) {
         while (i < (int)strlen(buffer)) {
           if (buffer[i] == '*'  && buffer[i+1] == '/') {
@@ -52,11 +53,13 @@ int advance(char *token, FILE *file) {
       else if (isalpha(buffer[i])) {
         int it_is_a_keyword = checkKeyword(i, buffer, token);
         if (it_is_a_keyword) {
+          printf("%s\n", token);
           return 1;
         }
       }
     }
     if (feof(file)) {
+      printf("end\n");
       return 0;
     }
   }

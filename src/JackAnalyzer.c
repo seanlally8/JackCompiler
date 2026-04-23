@@ -15,7 +15,6 @@ int main(int argc, char *argv[]) {
 
   FILE *file = fopen(argv[1], "r");
   while (advance(token, file)) {
-    printf("%s\n", token);
     memset(token, 0, 200);
   }
 
