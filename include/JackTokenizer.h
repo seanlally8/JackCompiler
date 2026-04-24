@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 // all your header file code (declarations, etc.) goes here
-int hasMoreTokens(FILE *file);
+int hasMoreTokens(char *buffer, int *index, FILE *filepntr);
 int advance(char *token, FILE *file);
 char *tokenType(char *token);
 char *keyword(char *token);

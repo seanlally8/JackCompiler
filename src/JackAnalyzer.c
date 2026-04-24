@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "JackTokenizer.h"
+#include "helper.h"
 
 int main(int argc, char *argv[]) {
 
@@ -11,13 +12,19 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  char *token = calloc(200, sizeof(char));
+  char *filename = argv[1];
+  int index = 0;
+  char *buffer = calloc(200, sizeof(char));
 
-  FILE *file = fopen(argv[1], "r");
-  while (advance(token, file)) {
-    memset(token, 0, 200);
+  FILE *filepntr = openFileToRead(filename, buffer);
+ 
+  getNextLine(buffer, filepntr);
+
+  while (hasMoreTokens(buffer, &index, filepntr)) {
+    printf("here\n");
   }
+  printf("end reached");
 
-  fclose(file);
-  free(token);
+  fclose(filepntr);
+  free(buffer);
 }
