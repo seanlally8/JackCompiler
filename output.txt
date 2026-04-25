@@ -1,40 +1,96 @@
+class
+{
+function
+void
+(
+)
+{
+var
+;
+var
+int
+;
+var
+int
+,
+;
+let
+=
+.
+(
+)
+;
+let
+=
+.
+(
+)
+;
+let
+=
+;
+while
+(
+<
+)
+{
+let
+[
+]
+=
+.
+(
+)
+;
+let
+=
++
+;
+}
+let
+=
+;
+let
+=
+;
+while
+(
+<
+)
+{
+let
+=
++
+[
+]
+;
+let
+=
++
+;
+}
+do
+.
+int
+(
+)
+;
+do
+.
+int
+(
 /
-/
-/
-/
+)
+;
+do
+.
+int
+(
+)
+;
+return
+;
+}
+}
 
-/
-//
-chere
- SquareGame {
- field Square square; /
- field int direction; /
- /
-
- //
- constructor SquareGame new() {
- /
- /
- let square = Square.new(0, 0, 30);
- let direction = 0; /
- return this;
- }
-
- //
- method void dispose() {
- do square.dispose();
- do Memory.deAlloc(this);
- return;
- }
-
- //
- method void moveSquare() {
- if (direction = 1) { do square.moveUp(); }
- if (direction = 2) { do square.moveDown(); }
- if (direction = 3) { do square.moveLeft(); }
- if (direction = 4) { do square.moveRight(); }
- do Sys.wait(5); /
- return;
- }
-
- //
+reached the end

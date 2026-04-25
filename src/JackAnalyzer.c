@@ -12,19 +12,27 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  char *filename = argv[1];
   int index = 0;
-  char *buffer = calloc(200, sizeof(char));
-
-  FILE *filepntr = openFileToRead(filename, buffer);
- 
-  getNextLine(buffer, filepntr);
-
-  while (hasMoreTokens(buffer, &index, filepntr)) {
-    printf("here\n");
+  FILE *filepntr = fopen(argv[1], "r");
+  if (filepntr == NULL) {
+    printf("Can't open file");
+    return 1;
   }
-  printf("end reached");
+  char *buffer = calloc(200, sizeof(char));
+  char *token = calloc(200, sizeof(char));
 
-  fclose(filepntr);
+  getNextLine(&index, buffer, filepntr);
+
+  while (!feof(filepntr)) {
+    advance(&index, filepntr, buffer, token);
+    printf("%s\n", token);
+    memset(token, 0, 200);
+  }
+  printf("reached the end\n");
+
+  fclose (filepntr);
   free(buffer);
+  free(token);
+
+
 }

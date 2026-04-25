@@ -1,73 +1,57 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
-#include "JackTokenizer.h"
 #include "helper.h"
 
-int hasMoreTokens(char *buffer, int *index, FILE *filepntr) {
-  
-  for (int temp_index = *index; temp_index < (int)strlen(buffer); temp_index++) {
-    printf("%c", buffer[temp_index]);
-    if (buffer[temp_index] == '\n' || buffer[temp_index] == '\r'){
-      temp_index = getNextLine(buffer, filepntr);
-      printf("\n");
+void advance(int *index, FILE* filepntr, char *buffer, char *token) {
+  char *KeywordsAndSymbols[40] = {"class", "constructor", "function", "method",
+                                  "field", "static", "var", "int", "char", 
+                                  "boolean", "void", "true", "false", "null",
+                                  "this", "let", "do", "if", "else", "while", 
+                                  "return", "{", "}", "(", ")", "[", "]", ".",
+                                  ",", ";", "+", "-", "*", "/", "&", "|", "<",
+                                  ">", "=", "~"};
+  int found = 0;
+  int temp_index = 0;
+  //iterators
+  int k;
+  int m;
+
+  for (*index = *index; *index < (int)strlen(buffer); (*index)++) {
+    if (buffer[*index] == '\n'){
+      getNextLine(index, buffer, filepntr);
     }
-    else if (isspace(buffer[temp_index])) {
-      while (isspace(buffer[temp_index+1])) {
-        temp_index++;
+    else if (buffer[*index] == '/' && buffer[(*index)+1] == '/') {
+      getNextLine(index, buffer, filepntr);
+    }
+    else if (buffer[*index] == '/' && buffer[(*index)+1] == '*') {
+      while (found == 0) {
+        for (int m = *index; m < (int)strlen(buffer); m++) {
+          if (buffer[m] == '*' && buffer[m+1] == '/') {
+            *index = m + 1;
+            found = 1;
+          }
+        }
+        if (found == 0) {
+          getNextLine(index, buffer, filepntr);
+        }
       }
     }
-    else if (buffer[temp_index] == '/' && buffer[temp_index+1] == '/') {
-      temp_index = getNextLine(buffer, filepntr);
-      printf("\n");
-    }
-    else if (buffer[temp_index] == '/' && buffer[temp_index+1] == '*') {
-      temp_index = skipToEnd(buffer, filepntr, temp_index);
-    }
-    else if (isgraph(buffer[temp_index])) {
-      int it_is_a_token = checkToken(&temp_index, buffer);
-      if (it_is_a_token) {
-        *index = temp_index;
-        return 1;
+    else if (isgraph(buffer[*index])) {
+      for (k = 0; k < 40; k++) {
+        for (m = *index; m < *index + (int)strlen(KeywordsAndSymbols[k]); m++) {
+          token[temp_index] = buffer[m];
+          temp_index++;
+        }
+        if (strcmp(token, KeywordsAndSymbols[k]) == 0) {
+          *index = m;
+          return;
+        }
+        else {
+          temp_index = 0;
+          memset(token, 0, 200);
+        }
       }
     }
   }
-  if (feof(filepntr)) {
-    return 0;
-  }
-  return 0;
 }
-
-
-/*int advance(char *token, FILE *file) {
-}
-
-char *tokenType(char *token) {
-
-  return "temp";
-}
-
-char *keyword(char *token) {
-
-  return "temp";
-}
-
-char symbol(char *token) {
-
-  return 't';
-}
-
-char *identifier(char *token) {
-
-  return "temp";
-}
-
-int intVal(char *token) {
-
-  return 0;
-}
-
-char *stringVal(char *token) {
-
-  return "temp";
-}*/

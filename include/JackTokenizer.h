@@ -7,7 +7,7 @@
 
 // all your header file code (declarations, etc.) goes here
 int hasMoreTokens(char *buffer, int *index, FILE *filepntr);
-int advance(char *token, FILE *file);
+void advance(int *index, FILE* filepntr, char *buffer, char *token);
 char *tokenType(char *token);
 char *keyword(char *token);
 char symbol(char *token);
