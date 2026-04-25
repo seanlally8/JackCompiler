@@ -29,5 +29,15 @@ void advance(int *index, FILE* filepntr, char *buffer, char *token) {
         return;
       }
     }
+    else if (isdigit(buffer[*index])) {
+      int temp_index = 0;
+      int m = 0;
+      for (m = *index; isdigit(buffer[m]); m++) {
+        token[temp_index] = buffer[m];
+        temp_index++;
+      }
+      *index = m;
+      return;
+    }
   }
 }
