@@ -26,6 +26,17 @@ void skipToEndOfComment(char *buffer, int *index, FILE *filepntr) {
   }
 }
 
+void extractStringConstant(int *index, char *buffer, char *token) {
+  // Extracts text between quotation marks.
+  int temp_index = 0;
+  int m = 0;
+  for (m = *index + 1; buffer[m] != '"'; m++) {
+    token[temp_index] = buffer[m];
+    temp_index++;
+  }
+  *index = m + 1;
+}
+
 int checkIfKeywordOrSymbol(int *index, char *token, char *buffer) {
   // Checks whether the current character is a symbol or the beginning
   // of a keyword.
@@ -65,3 +76,23 @@ int checkIfKeywordOrSymbol(int *index, char *token, char *buffer) {
   }
   return 0;
 }
+
+void extractIdentifier(int *index, char *buffer, char *token) {
+  char *symbols[20] = {"{", "}", "(", ")", "[", "]", ".",
+                  ",", ";", "+", "-", "*", "/", "&", 
+                  "|", "<", ">", "=", "~", " "};
+  int m = 0;
+  int k = 0;
+  int temp_index = 0;
+  for (m = *index; m < (int)strlen(buffer); m++) {
+    for (k = 0; k < 20; k++) {
+      if (buffer[m] == symbols[k][0]) {
+        *index = m;
+        return;
+      }
+    }
+    token[temp_index] = buffer[m];
+    temp_index++;
+  } 
+}
+

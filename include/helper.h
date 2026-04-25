@@ -7,6 +7,8 @@
 void getNextLine(int *index, char *buffer, FILE *filepntr);
 void skipToEndOfComment(char *buffer, int *index, FILE *filepntr);
 int checkIfKeywordOrSymbol(int* index, char *token, char *buffer);
+void extractStringConstant(int *index, char *buffer, char *token);
+void extractIdentifier(int *index, char *buffer, char *token);
 
 
 #endif // ends the #ifndef block

@@ -10,14 +10,22 @@ void advance(int *index, FILE* filepntr, char *buffer, char *token) {
     if (buffer[*index] == '\n'){
       getNextLine(index, buffer, filepntr);
     }
-    else if (buffer[*index] == '/' && buffer[(*index)+1] == '/') {
+    else if (buffer[*index] == '/' && buffer[*index+1] == '/') {
       getNextLine(index, buffer, filepntr);
     }
-    else if (buffer[*index] == '/' && buffer[(*index)+1] == '*') {
+    else if (buffer[*index] == '/' && buffer[*index+1] == '*') {
       skipToEndOfComment(buffer, index, filepntr);
     }
-    else if (isgraph(buffer[*index])) {
+    else if (buffer[*index] == '"') {
+      extractStringConstant(index, buffer, token);
+      return;
+    }
+    else if (isgraph(buffer[*index]) && !isdigit(buffer[*index])) {
       if (checkIfKeywordOrSymbol(index, token, buffer)) {
+        return;
+      }
+      else {
+        extractIdentifier(index, buffer, token);
         return;
       }
     }
