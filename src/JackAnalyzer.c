@@ -12,6 +12,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
+  // Declare global variables
   int index = 0;
   FILE *filepntr = fopen(argv[1], "r");
   if (filepntr == NULL) {
@@ -21,8 +22,11 @@ int main(int argc, char *argv[]) {
   char *buffer = calloc(200, sizeof(char));
   char *token = calloc(200, sizeof(char));
 
+  // Get first line of file to start reading in advance
   getNextLine(&index, buffer, filepntr);
 
+  // iterate over file to extract tokens, determine classification, 
+  // and print to xml file
   while (!feof(filepntr)) {
     advance(&index, filepntr, buffer, token);
     printf("%s\n", token);
@@ -30,9 +34,8 @@ int main(int argc, char *argv[]) {
   }
   printf("reached the end\n");
 
+  // Close files and free memory
   fclose (filepntr);
   free(buffer);
   free(token);
-
-
 }
