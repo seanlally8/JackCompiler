@@ -6,9 +6,6 @@
 // all your header file code (declarations, etc.) goes here
 void getNextLine(int *index, char *buffer, FILE *filepntr);
 void skipToEndOfComment(char *buffer, int *index, FILE *filepntr);
-int checkIfKeywordOrSymbol(int* index, char *token, char *buffer);
-void extractStringConstant(int *index, char *buffer, char *token);
-void extractIdentifier(int *index, char *buffer, char *token);
-
+char *nameFile(char *filename, char *extension);
 
 #endif // ends the #ifndef block

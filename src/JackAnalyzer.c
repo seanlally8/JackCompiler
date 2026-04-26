@@ -12,30 +12,42 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  // Declare global variables
+  // Initialize index (which will keep track of the current 
+  // index of buffer), and open input and output files
   int index = 0;
   FILE *filepntr = fopen(argv[1], "r");
   if (filepntr == NULL) {
-    printf("Can't open file");
+    printf("Can't open input file");
     return 1;
   }
+  char *filename = nameFile(argv[1], ".xml");
+  FILE *filewrtr = fopen(filename, "w");
+  if (filewrtr == NULL) {
+    printf("Could not open .xml file");
+    return 1;
+  }
+
+  // buffer will store 1 line of text from the input file to
+  // facilitate parsing and token will hold the current token 
   char *buffer = calloc(200, sizeof(char));
   char *token = calloc(200, sizeof(char));
 
-  // Get first line of file to start reading in advance
+  // Get first line of input file so 'advance' can start iterating
   getNextLine(&index, buffer, filepntr);
 
   // iterate over file to extract tokens, determine classification, 
   // and print to xml file
-  while (!feof(filepntr)) {
-    advance(&index, filepntr, buffer, token);
-    printf("%s\n", token);
+  fputs("<tokens>\n", filewrtr);
+  while (hasMoreTokens(&index, filepntr, buffer)) {
+    char *tokenType = advance(&index, filepntr, buffer, token);
+    fprintf(filewrtr, "<%s> %s </%s>\n", tokenType, token, tokenType);
     memset(token, 0, 200);
   }
-  printf("reached the end\n");
+  fputs("</tokens>\n", filewrtr);
 
   // Close files and free memory
   fclose (filepntr);
+  fclose (filewrtr);
   free(buffer);
   free(token);
 }
