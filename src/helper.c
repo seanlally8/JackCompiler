@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "helper.h"
+#include "JackTokenizer.h"
 
 void getNextLine(int *index, char *buffer, FILE *filepntr) {
   // Jumps to next line of file, resets index to 0 
@@ -38,3 +39,21 @@ char *nameFile(char *filename, char *extension) {
   }
   return filename;
 }
+
+char *process(int *index, char *buffer, char *token, char *expected_token, 
+              char *token_type, FILE *filewrtr, FILE *filepntr) {
+  if (strcmp(token, expected_token) == 0) {
+    printXMLToken(expected_token, token_type, filewrtr);
+  } 
+  else {
+    printf("Syntax Error\n");
+  }
+  char *new_token_type = advance(index, filepntr, buffer, token);
+  return new_token_type;
+}
+
+void printXMLToken(char *expected_token, char *token_type, FILE *filewrtr) {
+  fprintf(filewrtr, "<%s> %s </%s>\n", token_type, expected_token, token_type);
+}
+
+

@@ -41,7 +41,6 @@ int main(int argc, char *argv[]) {
   while (hasMoreTokens(&index, filepntr, buffer)) {
     char *tokenType = advance(&index, filepntr, buffer, token);
     fprintf(filewrtr, "<%s> %s </%s>\n", tokenType, token, tokenType);
-    memset(token, 0, 200);
   }
   fputs("</tokens>\n", filewrtr);
 

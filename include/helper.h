@@ -7,5 +7,7 @@
 void getNextLine(int *index, char *buffer, FILE *filepntr);
 void skipToEndOfComment(char *buffer, int *index, FILE *filepntr);
 char *nameFile(char *filename, char *extension);
+char *process(int *index, char *buffer, char *token, char *expected_token, char *token_type, FILE *filewrtr, FILE *filepntr);
+void printXMLToken(char *expected_token, char *token_type, FILE *filewrtr);
 
 #endif // ends the #ifndef block

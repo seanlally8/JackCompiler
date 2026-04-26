@@ -27,6 +27,7 @@ int hasMoreTokens(int *index, FILE *filepntr, char *buffer) {
 char *advance(int *index, FILE* filepntr, char *buffer, char *token) {
   // Extracts all the tokens and returns their classification 
 
+  memset(token, 0, 200);
   for (*index = *index; *index < (int)strlen(buffer); (*index)++) {
     if (buffer[*index] == '\n'){
       getNextLine(index, buffer, filepntr);
