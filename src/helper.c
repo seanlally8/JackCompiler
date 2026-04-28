@@ -46,14 +46,23 @@ char *process(int *index, char *buffer, char *token, char *expected_token,
     printXMLToken(expected_token, token_type, filewrtr);
   } 
   else {
-    printf("Syntax Error\n");
+    printf("Syntax Error in process\n");
   }
   char *new_token_type = advance(index, filepntr, buffer, token);
   return new_token_type;
 }
 
-void printXMLToken(char *expected_token, char *token_type, FILE *filewrtr) {
-  fprintf(filewrtr, "<%s> %s </%s>\n", token_type, expected_token, token_type);
+void printXMLToken(char *token, char *token_type, FILE *filewrtr) {
+  fprintf(filewrtr, "<%s> %s </%s>\n", token_type, token, token_type);
 }
 
-
+int typeCheck(char *token, char *token_type) {
+  // Checks whether the given token is a data type 
+  if (strcmp(token, "int") == 0 || strcmp(token, "char") == 0
+      || strcmp(token, "boolean") == 0 || strcmp(token_type, "identifier") == 0) {
+    return 1;
+  }
+  else {
+    return 0;
+  }
+}
