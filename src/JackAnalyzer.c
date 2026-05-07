@@ -3,6 +3,7 @@
 #include <string.h>
 #include "JackTokenizer.h"
 #include "helper.h"
+#include "CompilationEngine.h"
 
 int main(int argc, char *argv[]) {
 
@@ -29,21 +30,16 @@ int main(int argc, char *argv[]) {
 
   // Buffer will store 1 line of text from the input file to
   // facilitate parsing and token will hold the current token 
-  char *token_type = NULL;
   char *buffer = calloc(200, sizeof(char));
   char *token = calloc(200, sizeof(char));
 
   // Get first line of input file
   getNextLine(&index, buffer, filepntr);
+  advance(&index, filepntr, buffer, token);
 
   // Iterate over file to extract tokens, determine classification, 
   // and print to xml file
-  fputs("<tokens>\n", filewrtr);
-  while (hasMoreTokens(&index, filepntr, buffer)) {
-    token_type = advance(&index, filepntr, buffer, token);
-    fprintf(filewrtr, "<%s> %s </%s>\n", token_type, token, token_type);
-  }
-  fputs("</tokens>\n", filewrtr);
+  compileClass(&index, buffer, token, filewrtr, filepntr);
 
   // Close files and free memory
   fclose (filepntr);

@@ -13,5 +13,7 @@ void compileParameterList(int *index, char *buffer, char *token, char *token_typ
                           FILE *filewrtr, FILE *filepntr);
 void compileSubroutineBody(int *index, char *buffer, char *token, 
                            FILE *filewrtr, FILE *filepntr);
+void compileVarDec(int *index, char *buffer, char *token, FILE *filewrtr, 
+              FILE *filpntr);
 
 #endif // ends the #ifndef block

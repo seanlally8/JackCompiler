@@ -12,7 +12,7 @@ void compileClass(int *index, char *buffer, char *token, FILE *filewrtr, FILE *f
   char *token_type = NULL;
 
   // Opening tag
-  fputs("<class>\n", filewrtr);
+  fputs("<class>\n\t", filewrtr);
 
   // First terminal in class grammar ('class') written 
   // to xml and next token fetched.
@@ -20,6 +20,7 @@ void compileClass(int *index, char *buffer, char *token, FILE *filewrtr, FILE *f
 
   // Second terminal (className)
   if (strcmp(token_type, "identifier") == 0) {
+    fputs("\t", filewrtr);
     printXMLToken(token, token_type, filewrtr);
   }
   else {
@@ -30,10 +31,12 @@ void compileClass(int *index, char *buffer, char *token, FILE *filewrtr, FILE *f
   advance(index, filepntr, buffer, token);
 
   // Third terminal ('{')
+  fputs("\t", filewrtr);
   token_type = process(index, buffer, token, "{", "symbol", filewrtr, filepntr);
 
   // First non-terminal (classVarDec*)
   while (strcmp(token, "static") == 0 || strcmp(token, "field") == 0) {
+    fputs("\t", filewrtr);
     compileClassVarDec(index, buffer, token, filewrtr, filepntr);
   }
 
@@ -44,6 +47,7 @@ void compileClass(int *index, char *buffer, char *token, FILE *filewrtr, FILE *f
   }
 
   // Fourth terminal ('}')
+  fputs("\t", filewrtr);
   token_type = process(index, buffer, token, "}", "symbol", filewrtr, filepntr);
 
   // Closing tag for class non-terminal
@@ -55,7 +59,7 @@ void compileClassVarDec(int *index, char *buffer, char *token,
   char *token_type = NULL;
 
   // Opening tag for class-level variable declarations
-  fputs("<classVarDec>", filewrtr);
+  fputs("<classVarDec>\n\t\t", filewrtr);
 
   // First terminal ('static'|'field') 
   token_type = process(index, buffer, token, token, "keyword", filewrtr, filepntr);
@@ -63,6 +67,7 @@ void compileClassVarDec(int *index, char *buffer, char *token,
   // Second terminal ('int' | 'boolean' | 'char' | className)
   if (strcmp(token, "int") == 0 || strcmp(token, "boolean") == 0 
       || strcmp(token, "char") == 0 || strcmp(token_type, "identifier") == 0) {
+    fputs("\t\t", filewrtr);
     printXMLToken(token, token_type, filewrtr);
   } 
   else {
@@ -74,6 +79,7 @@ void compileClassVarDec(int *index, char *buffer, char *token,
 
   // Third terminal (varName)
   if (strcmp(token_type, "identifier") == 0) {
+    fputs("\t\t", filewrtr);
     printXMLToken(token, token_type, filewrtr);
   }
   else {
@@ -85,8 +91,10 @@ void compileClassVarDec(int *index, char *buffer, char *token,
 
   // Implements the optional variable list ((',' varName)*)
   while (strcmp(token, ",") == 0) {
+    fputs("\t\t", filewrtr);
     token_type = process(index, buffer, token, ",", "symbol", filewrtr, filepntr);
     if (strcmp(token_type, "identifier") == 0) {
+      fputs("\t\t", filewrtr);
       printXMLToken(token, token_type, filewrtr);
     }
     else {
@@ -96,10 +104,12 @@ void compileClassVarDec(int *index, char *buffer, char *token,
   }
 
   // Final terminal (";")
+  fputs("\t\t", filewrtr);
   process(index, buffer, token, ";", "symbol", filewrtr, filepntr);
 
   // Closing tag for class-level variable declarations
-  fputs("</classVarDec>", filewrtr);
+  fputs("\t", filewrtr);
+  fputs("</classVarDec>\n\t", filewrtr);
 }
 
 void compileSubroutine(int *index, char *buffer, char *token, 
@@ -107,7 +117,7 @@ void compileSubroutine(int *index, char *buffer, char *token,
   char *token_type = NULL;
   
   // Opening tag for subroutine 
-  fputs("<subroutineDec>\n", filewrtr);
+  fputs("<subroutineDec>\n\t\t", filewrtr);
 
   // First terminal ('method' |'function' | 'method')
   token_type = process(index, buffer, token, token, "keyword", filewrtr, filepntr);
@@ -116,6 +126,7 @@ void compileSubroutine(int *index, char *buffer, char *token,
   if (strcmp(token, "void") == 0 || strcmp(token, "int") == 0 
       || strcmp(token, "boolean") == 0 || strcmp(token, "char") == 0
       || strcmp(token_type, "identifier") == 0) {
+    fputs("\t\t", filewrtr);
     printXMLToken(token, token_type, filewrtr);
   }
   else {
@@ -127,22 +138,33 @@ void compileSubroutine(int *index, char *buffer, char *token,
 
   // Third terminal (subroutineName)
   if (strcmp(token_type, "identifier") == 0) {
+    fputs("\t\t", filewrtr);
     printXMLToken(token, token_type, filewrtr);
   }
   else {
     printf("Syntax Error in compileSubroutine: no subroutine name given");
   }
 
+  advance(index, filepntr, buffer, token);
+
   // Fourth terminal ('(')
+  fputs("\t\t", filewrtr);
   token_type = process(index, buffer, token, "(", "symbol", filewrtr, filepntr);
 
   // First non-terminal (parameterList)
+  fputs("\t\t", filewrtr);
   compileParameterList(index, buffer, token, token_type, filewrtr, filepntr);
 
+  // Fifth terminal (')')
+  fputs("\t\t", filewrtr);
+  token_type = process(index, buffer, token, ")", "symbol", filewrtr, filepntr);
+
   // Second non-terminal (subroutineBody)
+  fputs("\t\t", filewrtr);
   compileSubroutineBody(index, buffer, token, filewrtr, filepntr);
 
   // Closing tag for subroutine
+  fputs("\t", filewrtr);
   fputs("</subroutineDec>\n", filewrtr);
 }
 
@@ -150,7 +172,7 @@ void compileParameterList(int *index, char *buffer, char *token, char *token_typ
                           FILE *filewrtr, FILE *filepntr) {
 
   // Opening tag for parameterList
-  fputs("<parameterList>\n", filewrtr);
+  fputs("<parameterList>\n\t\t\t", filewrtr);
 
   // First terminal (type) -- 
   // if not a type, assume empty parameter list
@@ -166,6 +188,7 @@ void compileParameterList(int *index, char *buffer, char *token, char *token_typ
 
   // Second terminal (varName)
   if (strcmp(token_type, "identifier") == 0) {
+    fputs("\t\t\t", filewrtr);
     printXMLToken(token, token_type, filewrtr);
   }
   else {
@@ -177,9 +200,10 @@ void compileParameterList(int *index, char *buffer, char *token, char *token_typ
 
   // Beginning of (',' varName)*
   while (strcmp(token, ",") == 0) {
-    printXMLToken(token, token_type, filewrtr);
-    token_type = advance(index, filepntr, buffer, token);
+    fputs("\t\t\t", filewrtr);
+    token_type = process(index, buffer, token, ",", "symbol", filewrtr, filepntr);
     if (typeCheck(token, token_type)) {
+      fputs("\t\t\t", filewrtr);
       printXMLToken(token, token_type, filewrtr);
     }
     else {
@@ -187,6 +211,7 @@ void compileParameterList(int *index, char *buffer, char *token, char *token_typ
     }
     token_type = advance(index, filepntr, buffer, token);
     if (strcmp(token_type, "identifier") == 0) {
+      fputs("\t\t\t", filewrtr);
       printXMLToken(token, token_type, filewrtr);
     }
     else {
@@ -196,10 +221,85 @@ void compileParameterList(int *index, char *buffer, char *token, char *token_typ
   }
 
   // Closing tag for parameterList
+  fputs("\t\t", filewrtr);
   fputs("</parameterList>\n", filewrtr);
 }
 
 void compileSubroutineBody(int *index, char *buffer, char *token, FILE *filewrtr, 
                            FILE *filepntr) {
 
+  // Opening tag for subroutineBody
+  fputs("<subroutineBody>\n\t\t\t", filewrtr);
+
+  // First terminal ('{')
+  process(index, buffer, token, "{", "symbol", filewrtr, filepntr);
+
+  // Implementation of varDec*
+  while (strcmp(token, "var") == 0) {
+    fputs("\t\t\t", filewrtr);
+    compileVarDec(index, buffer, token, filewrtr, filepntr);
+  }
+
+  // Second terminal ('}')
+  fputs("\t\t\t", filewrtr);
+  process(index, buffer, token, "}", "symbol", filewrtr, filepntr);
+
+  // Closing tag for subroutineBody
+  fputs("\t\t", filewrtr);
+  fputs("</subroutineBody>\n", filewrtr);
+}
+
+void compileVarDec(int *index, char *buffer, char *token, FILE *filewrtr, FILE *filepntr) {
+  char *token_type = NULL;
+
+  // Opening tag for varDec
+  fputs("<varDec>\n\t\t\t\t", filewrtr);
+
+  // First terminal ("var")
+  token_type = process(index, buffer, token, "var", "keyword", filewrtr, filepntr);
+
+  // Second terminal (type)
+  if (typeCheck(token, token_type)) {
+    fputs("\t\t\t\t", filewrtr);
+    printXMLToken(token, token_type, filewrtr);
+  }
+  else {
+    printf("Syntax error in compileVarDec: no data type\n");
+  }
+
+  // Get next token
+  token_type = advance(index, filepntr, buffer, token);
+
+  // 
+  if (strcmp(token_type, "identifier") == 0) {
+    fputs("\t\t\t\t", filewrtr);
+    printXMLToken(token, token_type, filewrtr);
+  }
+  else {
+    printf("Syntax error in compileVarDec: no varName given\n");
+  }
+
+  token_type = advance(index, filepntr, buffer, token);
+
+  while (strcmp(token, ",") == 0) {
+    fputs("\t\t\t\t", filewrtr);
+    token_type = process(index, buffer, token, ",", "symbol", filewrtr, filepntr);
+
+    if (strcmp(token_type, "identifier") == 0) {
+      fputs("\t\t\t\t", filewrtr);
+      printXMLToken(token, token_type, filewrtr);
+    }
+    else {
+      printf("Syntax error in compileVarDec: missing varName following ','\n");
+    }
+
+    token_type = advance(index, filepntr, buffer, token);
+  }
+
+  fputs("\t\t\t\t", filewrtr);
+  token_type = process(index, buffer, token, ";", "symbol", filewrtr, filepntr);
+
+  // Closing tag for varDec
+  fputs("\t\t\t", filewrtr);
+  fputs("</varDec>\n", filewrtr);
 }
