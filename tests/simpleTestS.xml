@@ -2,12 +2,6 @@
 	<keyword> class </keyword>
 	<identifier> Example </identifier>
 	<symbol> { </symbol>
-	<classVarDec>
-		<keyword> field </keyword>
-		<keyword> int </keyword>
-		<identifier> data </identifier>
-		<symbol> ; </symbol>
-	</classVarDec>
 	<subroutineDec>
 		<keyword> constructor </keyword>
 		<identifier> Example </identifier>
@@ -35,6 +29,47 @@
 				<identifier> other </identifier>
 				<symbol> ; </symbol>
 			</varDec>
+			<statements>
+				<statement> <letStatement>
+					<keyword> let </keyword>
+					<identifier> other </identifier>
+					<symbol> = </symbol>
+					<expression>
+					</expression>
+					<symbol> ; </symbol>
+				</letStatement> </statement>
+				<statement> <ifStatement>
+					<keyword> if </keyword>
+					<symbol> ( </symbol>
+					<expression>
+					</expression>
+					<symbol> ) </symbol>
+					<symbol> { </symbol>
+					<statements>
+						<statement> <letStatement>
+							<keyword> let </keyword>
+							<identifier> more_data </identifier>
+							<symbol> = </symbol>
+							<expression>
+							</expression>
+							<symbol> ; </symbol>
+						</letStatement> </statement>
+						<statement> <doStatement>
+							<statement> do </statement>
+							<subroutineCall>
+							</subroutineCall>
+							<symbol> ; </symbol>
+						</doStatement> </statement>
+					</statements>
+					<symbol> } </symbol>
+				</ifStatement> </statement>
+				<statement> <returnStatement>
+					<keyword> return </keyword>
+					<expression>
+					</expression>
+					<symbol> ; </symbol>
+				</returnStatement> </statement>
+			</statements>
 			<symbol> } </symbol>
 		</subroutineBody>
 	</subroutineDec>

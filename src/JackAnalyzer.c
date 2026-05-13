@@ -16,6 +16,7 @@ int main(int argc, char *argv[]) {
   // Initialize index (which will keep track of the current 
   // index of buffer), and open input and output files
   int index = 0;
+  int tab = 1;
   FILE *filepntr = fopen(argv[1], "r");
   if (filepntr == NULL) {
     printf("Can't open input file");
@@ -39,7 +40,7 @@ int main(int argc, char *argv[]) {
 
   // Iterate over file to extract tokens, determine classification, 
   // and print to xml file
-  compileClass(&index, buffer, token, filewrtr, filepntr);
+  compileClass(&tab, &index, buffer, token, filewrtr, filepntr);
 
   // Close files and free memory
   fclose (filepntr);

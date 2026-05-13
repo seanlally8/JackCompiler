@@ -40,10 +40,10 @@ char *nameFile(char *filename, char *extension) {
   return filename;
 }
 
-char *process(int *index, char *buffer, char *token, char *expected_token, 
+char *process(int *tab, int *index, char *buffer, char *token, char *expected_token, 
               char *token_type, FILE *filewrtr, FILE *filepntr) {
   if (strcmp(token, expected_token) == 0) {
-    printXMLToken(expected_token, token_type, filewrtr);
+    printXMLToken(tab, expected_token, token_type, filewrtr);
   } 
   else {
     printf("Syntax Error in process\n");
@@ -52,7 +52,14 @@ char *process(int *index, char *buffer, char *token, char *expected_token,
   return new_token_type;
 }
 
-void printXMLToken(char *token, char *token_type, FILE *filewrtr) {
+void printTabs(int *tab, FILE *filewrtr) {
+  for (int i = 0; i < *tab; i++) {
+    fputc('\t', filewrtr);
+  }
+}
+
+void printXMLToken(int *tab, char *token, char *token_type, FILE *filewrtr) {
+  printTabs(tab, filewrtr);
   fprintf(filewrtr, "<%s> %s </%s>\n", token_type, token, token_type);
 }
 

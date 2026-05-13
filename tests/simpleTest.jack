@@ -1,9 +1,14 @@
 class Example {
-  field int data;
 
   constructor Example new(int input, int output) {
     var int more_data;
     var boolean other;
 
+    let other = 1;
+    if (x) {
+      let more_data = 5;
+      do x;
+    }
+    return x;
   }
 }

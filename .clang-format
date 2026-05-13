@@ -1,0 +1,9 @@
+# Set the number of spaces for each indentation level
+IndentWidth: 8
+
+# Set the visual width of a tab character
+TabWidth: 8
+
+# Ensure tabs are used instead of spaces for indentation
+UseTab: Always
+
