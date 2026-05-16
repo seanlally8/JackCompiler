@@ -1,11 +1,20 @@
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 #include "helper.h"
 #include "JackTokenizer.h"
 
+void getFirstLine(char *buffer, FILE *filepntr) {
+  // Gets next line without setting index to -1
+  // Useful for getting first line and cycling through lines
+  // in skipToEndOfComment
+  memset(buffer, 0, 200);
+  fgets(buffer, 200, filepntr);
+}
+
 void getNextLine(int *index, char *buffer, FILE *filepntr) {
   // Jumps to next line of file, resets index to 0 
-  // (i.e. the beginning of the line), and zeros out the buffer
+  // (i.e. the beginning of the line)-- zeros out the buffer
   // for a clean read.
   memset(buffer, 0, 200);
   *index = -1;
@@ -23,25 +32,43 @@ void skipToEndOfComment(char *buffer, int *index, FILE *filepntr) {
       }
     }
     if (found == 0) {
-      getNextLine(index, buffer, filepntr);
+      getFirstLine(buffer, filepntr);
     }
   }
 }
 
-char *nameFile(char *filename, char *extension) {
-  for (int t = 0; t < (int)strlen(filename); t++){
-    if (filename[t] == '.'){
-      filename[t] = 'S';
-      filename[t + 1] = '\0';
-      strcat(filename, extension);
-      break;
+char *nameOutputFile(char *inputname, char *new_path) {
+  // input is path/to/file.jack 
+  // output is path/to/output/file.xml
+  int new_index = 0;
+  int slash_index = 0;
+
+  for (int i = 0; i < (int)strlen(inputname) + 1; i++) {
+    if (inputname[i] == '/') {
+      slash_index = i;
+    }
+    else if (inputname[i] == '\0') {
+      for (int m = 0; m < slash_index + 1; m++) {
+        new_path[m] = inputname[m];
+      }
+      strcat(new_path, "output/");
+      mkdir(new_path, S_IRWXU);
+      new_index = (int)strlen(new_path);
+      for (int n = slash_index + 1; n < (int)strlen(inputname) - 4; n++) {
+        new_path[new_index] = inputname[n];
+        new_index++;
+      }
+      strcat(new_path, "xml");
     }
   }
-  return filename;
+  return new_path;
 }
 
 char *process(int *tab, int *index, char *buffer, char *token, char *expected_token, 
               char *token_type, FILE *filewrtr, FILE *filepntr) {
+  // Checks to make sure current token is same as expected token given the grammatical rule
+  // Then prints xml tags
+  // Then advances to next token and returns token_type of new token
   if (strcmp(token, expected_token) == 0) {
     printXMLToken(tab, expected_token, token_type, filewrtr);
   } 
@@ -112,6 +139,7 @@ int termCheck(char *token, char *token_type) {
 }
 
 int fileCheck(char *inputname) {
+  // Is it a jack file?
   int count = 0;
   char ext[5] = {0};
 
@@ -130,4 +158,11 @@ int fileCheck(char *inputname) {
     }
   }
   return 0;
+}
+
+void zeroBuffers(char *token, char *buffer, char *new_path) {
+  memset(token, 0, 200);
+  memset(buffer, 0, 200);
+  memset(new_path, 0, 200);
+  return;
 }

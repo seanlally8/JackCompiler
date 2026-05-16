@@ -4,9 +4,10 @@
 
 
 // all your header file code (declarations, etc.) goes here
+void getFirstLine(char *buffer, FILE *filepntr);
 void getNextLine(int *index, char *buffer, FILE *filepntr);
 void skipToEndOfComment(char *buffer, int *index, FILE *filepntr);
-char *nameFile(char *filename, char *extension);
+char *nameOutputFile(char *inputname, char *new_path);
 char *process(int *tab, int *index, char *buffer, char *token, char *expected_token, 
               char *token_type, FILE *filewrtr, FILE *filepntr);
 void printXMLToken(int *tab, char *token, char *token_type, FILE *filewrtr);
@@ -16,5 +17,6 @@ int opCheck(char *token);
 int keywordConstantCheck(char *token);
 int termCheck(char *token, char *token_type);
 int fileCheck(char *inputname);
+void zeroBuffers(char *token, char *buffer, char *new_path);
 
 #endif // ends the #ifndef block

@@ -518,6 +518,8 @@ void compileDo(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, 
   // ';'
   process(tab, index, buffer, token, ";", "symbol", filewrtr, filepntr);
 
+  free(next_token);
+
   (*tab)--;
 
   // Closing tag

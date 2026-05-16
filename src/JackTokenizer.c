@@ -64,6 +64,8 @@ char *advance(int *index, FILE* filepntr, char *buffer, char *token) {
 }
 
 char *tokenLookAhead(int *index, FILE* filepntr, char *buffer) {
+  // Fetches the next token in the stream
+  
   fpos_t bookmark;
   char *next_token = calloc(200, sizeof(char));
   char *buffer_lookahead = calloc(200, sizeof(char));
@@ -81,6 +83,7 @@ char *tokenLookAhead(int *index, FILE* filepntr, char *buffer) {
 
 void extractStringConstant(int *index, char *buffer, char *token) {
   // Extracts text between quotation marks.
+  
   int temp_index = 0;
   int m = 0;
   for (m = *index + 1; buffer[m] != '"'; m++) {
@@ -91,10 +94,10 @@ void extractStringConstant(int *index, char *buffer, char *token) {
 }
 
 int extractKeyword(int *index, char *token, char *buffer) {
-  // Checks whether the current character is the beginning
-  // of a keyword, and then extracts the keyword.
+  // Compares substring starting at current character to keywords in keyword array,
+  // and if a match is found returns 1. Matched token is written to memory on the heap.
 
-  // Array of all keywords and symbols
+  // Array of all keywords
   char *Keywords[21] = {"class", "constructor", "function", "method",
                         "field", "static", "var", "int", "char", 
                         "boolean", "void", "true", "false", "null",
@@ -107,7 +110,7 @@ int extractKeyword(int *index, char *token, char *buffer) {
   int k = 0;
   int m = 0;
 
-  // Iterate over all keywords and symbols and compare each entry 
+  // Iterate over all keywords and compare each entry 
   // to the substring of equal length starting at the currently selected 
   // character in the buffer.
   for (k = 0; k < 21; k++) {
