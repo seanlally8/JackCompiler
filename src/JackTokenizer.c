@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "helper.h"
 #include "JackTokenizer.h"
@@ -60,6 +61,22 @@ char *advance(int *index, FILE* filepntr, char *buffer, char *token) {
     }
   }
   return "undefined";
+}
+
+char *tokenLookAhead(int *index, FILE* filepntr, char *buffer) {
+  fpos_t bookmark;
+  char *next_token = calloc(200, sizeof(char));
+  char *buffer_lookahead = calloc(200, sizeof(char));
+  int temp_index = *index;
+  strcpy(buffer_lookahead, buffer);
+  fgetpos(filepntr, &bookmark);
+
+  advance(&temp_index, filepntr, buffer_lookahead, next_token);
+
+  fsetpos(filepntr, &bookmark);
+  free(buffer_lookahead);
+
+  return next_token;
 }
 
 void extractStringConstant(int *index, char *buffer, char *token) {

@@ -10,5 +10,6 @@ int extractSymbol(int* index, char *token, char *buffer);
 void extractStringConstant(int *index, char *buffer, char *token);
 void extractIdentifier(int *index, char *buffer, char *token);
 void extractIntegerConstant(int *index, char *buffer, char *token);
+char *tokenLookAhead(int *index, FILE* filepntr, char *buffer);
 
 #endif // ends the #ifndef block

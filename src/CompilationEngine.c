@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "helper.h"
 #include "JackTokenizer.h"
 #include "CompilationEngine.h"
@@ -180,42 +181,42 @@ void compileParameterList(int *tab, int *index, char *buffer, char *token, char 
   // if not a type, assume empty parameter list
   if (typeCheck(token, token_type)) {
     printXMLToken(tab, token, token_type, filewrtr);
+    token_type = advance(index, filepntr, buffer, token);
   }
   else {
+    (*tab)--;
+    printTabs(tab, filewrtr);
+    fputs("</parameterList>\n", filewrtr);
     return;
   }
-
-  // Get next token
-  token_type = advance(index, filepntr, buffer, token);
 
   // Second terminal (varName)
   if (strcmp(token_type, "identifier") == 0) {
     printXMLToken(tab, token, token_type, filewrtr);
+    token_type = advance(index, filepntr, buffer, token);
   }
   else {
     printf("Syntax Error in compileParameterList: no varName\n");
   }
 
-  // Get next token
-  token_type = advance(index, filepntr, buffer, token);
 
   // Beginning of (',' varName)*
   while (strcmp(token, ",") == 0) {
     token_type = process(tab, index, buffer, token, ",", "symbol", filewrtr, filepntr);
     if (typeCheck(token, token_type)) {
       printXMLToken(tab, token, token_type, filewrtr);
+      token_type = advance(index, filepntr, buffer, token);
     }
     else {
       printf("Syntax Error in compileParameterList: No type in one of the parameter\n");
     }
-    token_type = advance(index, filepntr, buffer, token);
     if (strcmp(token_type, "identifier") == 0) {
       printXMLToken(tab, token, token_type, filewrtr);
+      token_type = advance(index, filepntr, buffer, token);
     }
     else {
       printf("Syntax error in compileParamterList: no varName in one of the parameters\n");
     }
-    token_type = advance(index, filepntr, buffer, token);
   }
 
   (*tab)--;
@@ -332,28 +333,23 @@ void compileStatements(int *tab, int *index, char *buffer, char *token, FILE *fi
 }
 
 void compileStatement(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, FILE *filepntr) {
-  fputs("<statement> ", filewrtr);
 
   if (strcmp(token, "let") == 0) {
     compileLet(tab, index, buffer, token, filewrtr, filepntr);
-    fputs(" </statement>\n", filewrtr);
   }
   else if (strcmp(token, "if") == 0) {
     compileIf(tab, index, buffer, token, filewrtr, filepntr);
-    fputs(" </statement>\n", filewrtr);
   }
   else if (strcmp(token, "while") == 0) {
     compileWhile(tab, index, buffer, token, filewrtr, filepntr);
-    fputs(" </statement>\n", filewrtr);
   }
   else if (strcmp(token, "do") == 0) {
     compileDo(tab, index, buffer, token, filewrtr, filepntr);
-    fputs(" </statement>\n", filewrtr);
   }
   else if (strcmp(token, "return") == 0) {
     compileReturn(tab, index, buffer, token, filewrtr, filepntr);
-    fputs(" </statement>\n", filewrtr);
   }
+  
 }
 
 void compileLet(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, FILE *filepntr) {
@@ -383,7 +379,7 @@ void compileLet(int *tab, int *index, char *buffer, char *token, FILE *filewrtr,
     token_type = process(tab, index, buffer, token, "[", "symbol", filewrtr, filepntr);
 
     printTabs(tab, filewrtr);
-    compileExpression(tab, index, buffer, token, filewrtr, filepntr);
+    compileExpression(tab, index, buffer, token, token_type, filewrtr, filepntr);
 
     token_type = process(tab, index, buffer, token, "]", "symbol", filewrtr, filepntr);
   }
@@ -393,7 +389,7 @@ void compileLet(int *tab, int *index, char *buffer, char *token, FILE *filewrtr,
 
   // expression
   printTabs(tab, filewrtr);
-  compileExpression(tab, index, buffer, token, filewrtr, filepntr);
+  compileExpression(tab, index, buffer, token, token_type, filewrtr, filepntr);
 
   // ';'
   process(tab, index, buffer, token, ";", "symbol", filewrtr, filepntr);
@@ -401,11 +397,12 @@ void compileLet(int *tab, int *index, char *buffer, char *token, FILE *filewrtr,
   (*tab)--;
 
   printTabs(tab, filewrtr);
-  fputs("</letStatement>", filewrtr);
+  fputs("</letStatement>\n", filewrtr);
 
 }
 
 void compileIf(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, FILE *filepntr) {
+  char *token_type = NULL;
 
   (*tab)++;
 
@@ -415,11 +412,11 @@ void compileIf(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, 
   process(tab, index, buffer, token, "if", "keyword", filewrtr, filepntr);
 
   // '('
-  process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr);
+  token_type = process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr);
 
   // expression
   printTabs(tab, filewrtr);
-  compileExpression(tab, index, buffer, token, filewrtr, filepntr);
+  compileExpression(tab, index, buffer, token, token_type, filewrtr, filepntr);
 
   // ')'
   process(tab, index, buffer, token, ")", "symbol", filewrtr, filepntr);
@@ -446,10 +443,11 @@ void compileIf(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, 
   (*tab)--;
 
   printTabs(tab, filewrtr);
-  fputs("</ifStatement>", filewrtr);
+  fputs("</ifStatement>\n", filewrtr);
 }
 
 void compileWhile(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, FILE *filepntr) {
+  char *token_type = NULL;
 
   (*tab)++;
   
@@ -460,11 +458,11 @@ void compileWhile(int *tab, int *index, char *buffer, char *token, FILE *filewrt
   process(tab, index, buffer, token, "while", "keyword", filewrtr, filepntr);
 
   // '('
-  process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr);
+  token_type = process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr);
   
   // expression
   printTabs(tab, filewrtr);
-  compileExpression(tab, index, buffer, token, filewrtr, filepntr);
+  compileExpression(tab, index, buffer, token, token_type, filewrtr, filepntr);
 
   // ')'
   process(tab, index, buffer, token, ")", "symbol", filewrtr, filepntr);
@@ -482,20 +480,40 @@ void compileWhile(int *tab, int *index, char *buffer, char *token, FILE *filewrt
   (*tab)--;
 
   printTabs(tab, filewrtr);
-  fputs("</whileStatement>", filewrtr);
+  fputs("</whileStatement>\n", filewrtr);
 }
 
 void compileDo(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, FILE *filepntr) {
+  char *token_type = NULL;
   (*tab)++;
 
   fputs("<doStatement>\n", filewrtr);
 
   // 'do'
-  process(tab, index, buffer, token, "do", "statement", filewrtr, filepntr);
+  token_type = process(tab, index, buffer, token, "do", "keyword", filewrtr, filepntr);
+
+  char *next_token = tokenLookAhead(index, filepntr, buffer);
 
   // subroutineCall
-  printTabs(tab, filewrtr);
-  compileTerm(tab, index, buffer, token, filewrtr, filepntr);
+  if (strcmp(token_type, "identifier") == 0 && next_token[0] == '(') {
+    printXMLToken(tab, token, token_type, filewrtr);
+    advance(index, filepntr, buffer, token);
+    token_type = process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr);
+    printTabs(tab, filewrtr);
+    compileExpressionList(tab, index, buffer, token, token_type, filewrtr, filepntr);
+    process(tab, index, buffer, token, ")", "symbol", filewrtr, filepntr); 
+  }
+  else if (strcmp(token_type, "identifier") == 0 && next_token[0] == '.') {
+    printXMLToken(tab, token, token_type, filewrtr);
+    advance(index, filepntr, buffer, token);
+    token_type = process(tab, index, buffer, token, ".", "symbol", filewrtr, filepntr); 
+    printXMLToken(tab, token, token_type, filewrtr);
+    advance(index, filepntr, buffer, token);
+    token_type = process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr); 
+    printTabs(tab, filewrtr);
+    compileExpressionList(tab, index, buffer, token, token_type, filewrtr, filepntr);
+    process(tab, index, buffer, token, ")", "symbol", filewrtr, filepntr); 
+  }
 
   // ';'
   process(tab, index, buffer, token, ";", "symbol", filewrtr, filepntr);
@@ -504,7 +522,7 @@ void compileDo(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, 
 
   // Closing tag
   printTabs(tab, filewrtr);
-  fputs("</doStatement>", filewrtr);
+  fputs("</doStatement>\n", filewrtr);
 }
 
 void compileReturn(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, FILE *filepntr) {
@@ -518,9 +536,9 @@ void compileReturn(int *tab, int *index, char *buffer, char *token, FILE *filewr
   token_type = process(tab, index, buffer, token, "return", "keyword", filewrtr, filepntr);
 
   // expression?
-  if (strcmp(token_type, "identifier") == 0) {
+  if (termCheck(token, token_type)) {
     printTabs(tab, filewrtr);
-    compileExpression(tab, index, buffer, token, filewrtr, filepntr);
+    compileExpression(tab, index, buffer, token, token_type, filewrtr, filepntr);
   }
 
   // ';'
@@ -530,27 +548,125 @@ void compileReturn(int *tab, int *index, char *buffer, char *token, FILE *filewr
 
   // Closing Tag
   printTabs(tab, filewrtr);
-  fputs("</returnStatement>", filewrtr);
+  fputs("</returnStatement>\n", filewrtr);
 }
 
-void compileExpression(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, FILE *filepntr) {
+void compileExpression(int *tab, int *index, char *buffer, char *token, char *token_type, FILE *filewrtr, FILE *filepntr) {
+
   (*tab)++;
   fputs("<expression>\n", filewrtr);
 
-  advance(index, filepntr, buffer, token);
+  // term
+  printTabs(tab, filewrtr);
+  token_type = compileTerm(tab, index, buffer, token, token_type, filewrtr, filepntr);
+
+  // (op term)*
+  while (opCheck(token)) {
+    printXMLToken(tab, token, token_type, filewrtr);
+    token_type = advance(index, filepntr, buffer, token);
+    printTabs(tab, filewrtr);
+    compileTerm(tab, index, buffer, token, token_type, filewrtr, filepntr);
+  }
 
   (*tab)--; 
   printTabs(tab, filewrtr);
   fputs("</expression>\n", filewrtr);
 }
 
-void compileTerm(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, FILE *filepntr) {
-  (*tab)++;
-  fputs("<expression>\n", filewrtr);
+char *compileTerm(int *tab, int *index, char *buffer, char *token, char *token_type, FILE *filewrtr, FILE *filepntr) {
 
-  advance(index, filepntr, buffer, token);
+  (*tab)++;
+  fputs("<term>\n", filewrtr);
+
+  char *next_token = tokenLookAhead(index, filepntr, buffer);
+  
+  // integerConstant | stringConstant | keywordConstant 
+  // | varName | varName '[' expression ']' | '(' expression ')'
+  // | (unaryOp term) | subroutineCall
+
+  if (strcmp(token_type, "integerConstant") == 0) { 
+    printXMLToken(tab, token, token_type, filewrtr);
+    token_type = advance(index, filepntr, buffer, token);
+  }
+  else if (strcmp(token_type, "stringConstant") == 0) {
+    printXMLToken(tab, token, token_type, filewrtr);
+    token_type = advance(index, filepntr, buffer, token);
+  }
+  else if (keywordConstantCheck(token)) {
+    printXMLToken(tab, token, token_type, filewrtr);
+    token_type = advance(index, filepntr, buffer, token);
+  }
+  else if (strcmp(token_type, "identifier") == 0 && next_token[0] == '[') {
+    printXMLToken(tab, token, token_type, filewrtr);
+    advance(index, filepntr, buffer, token);
+    token_type = process(tab, index, buffer, token, "[", "symbol", filewrtr, filepntr);
+    printTabs(tab, filewrtr);
+    compileExpression(tab, index, buffer, token, token_type, filewrtr, filepntr);
+    token_type = process(tab, index, buffer, token, "]", "symbol", filewrtr, filepntr);
+  }
+  else if (strcmp(token, "(") == 0) {
+    token_type = process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr);
+    printTabs(tab, filewrtr);
+    compileExpression(tab, index, buffer, token, token_type, filewrtr, filepntr);
+    token_type = process(tab, index, buffer, token, ")", "symbol", filewrtr, filepntr);
+  }
+  else if (strcmp(token, "-") == 0 || strcmp(token, "~") == 0) {
+    printXMLToken(tab, token, token_type, filewrtr);
+    token_type = advance(index, filepntr, buffer, token);
+    printTabs(tab, filewrtr);
+    token_type = compileTerm(tab, index, buffer, token, token_type, filewrtr, filepntr);
+  }
+  else if (strcmp(token_type, "identifier") == 0 && next_token[0] == '(') {
+    printXMLToken(tab, token, token_type, filewrtr);
+    advance(index, filepntr, buffer, token);
+    token_type = process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr);
+    printTabs(tab, filewrtr);
+    compileExpressionList(tab, index, buffer, token, token_type, filewrtr, filepntr);
+    token_type = process(tab, index, buffer, token, ")", "symbol", filewrtr, filepntr); 
+  }
+  else if (strcmp(token_type, "identifier") == 0 && next_token[0] == '.') {
+    printXMLToken(tab, token, token_type, filewrtr);
+    advance(index, filepntr, buffer, token);
+    token_type = process(tab, index, buffer, token, ".", "symbol", filewrtr, filepntr); 
+    printXMLToken(tab, token, token_type, filewrtr);
+    advance(index, filepntr, buffer, token);
+    token_type = process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr); 
+    printTabs(tab, filewrtr);
+    compileExpressionList(tab, index, buffer, token, token_type, filewrtr, filepntr);
+    token_type = process(tab, index, buffer, token, ")", "symbol", filewrtr, filepntr); 
+  }
+  else if (strcmp(token_type, "identifier") == 0) {
+    printXMLToken(tab, token, token_type, filewrtr);
+    token_type = advance(index, filepntr, buffer, token);
+  }
+
+  free(next_token);
+  
 
   (*tab)--; 
   printTabs(tab, filewrtr);
-  fputs("</expression>\n", filewrtr);
+  fputs("</term>\n", filewrtr);
+
+  return token_type;
+}
+
+void compileExpressionList(int *tab, int *index, char *buffer, char *token, char *token_type, FILE *filewrtr, FILE *filepntr) {
+  (*tab)++;
+
+  fputs("<expressionList>\n", filewrtr);
+
+  // (expression (',' expression)*)?
+  if (termCheck(token, token_type)) {
+    printTabs(tab, filewrtr);
+    compileExpression(tab, index, buffer, token, token_type, filewrtr, filepntr);
+    while (token[0] == ',') {
+      token_type = process(tab, index, buffer, token, ",", "symbol", filewrtr, filepntr);
+      printTabs(tab, filewrtr);
+      compileExpression(tab, index, buffer, token, token_type, filewrtr, filepntr);
+    }
+  }
+
+  (*tab)--;
+  printTabs(tab, filewrtr);
+  fputs("</expressionList>\n", filewrtr);
 }

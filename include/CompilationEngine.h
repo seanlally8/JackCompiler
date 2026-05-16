@@ -23,11 +23,13 @@ void compileLet(int *tab, int *index, char *buffer, char *token,
                 FILE *filewrtr, FILE *filepntr);
 void compileIf(int *tab, int *index, char *buffer, 
                char *token, FILE *filewrtr, FILE *filepntr);
-void compileExpression(int *tab, int *index, char *buffer, 
+void compileExpression(int *tab, int *index, char *buffer, char *token_type,
                        char *token, FILE *filewrtr, FILE *filepntr);
 void compileWhile(int *tab, int *index, char *buffer, char *token, 
                   FILE *filewrtr, FILE *filepntr);
 void compileDo(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, FILE *filepntr);
-void compileTerm(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, FILE *filepntr);
+char *compileTerm(int *tab, int *index, char *buffer, char *token, char *token_type, FILE *filewrtr, FILE *filepntr);
 void compileReturn(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, FILE *filepntr);
+void compileExpressionList(int *tab, int *index, char *buffer, char *token, char *token_type, FILE *filewrtr, FILE *filepntr);
+
 #endif // ends the #ifndef block

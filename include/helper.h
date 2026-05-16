@@ -12,5 +12,9 @@ char *process(int *tab, int *index, char *buffer, char *token, char *expected_to
 void printXMLToken(int *tab, char *token, char *token_type, FILE *filewrtr);
 int typeCheck(char *token, char *token_type);
 void printTabs(int *tab, FILE *filewrtr);
+int opCheck(char *token);
+int keywordConstantCheck(char *token);
+int termCheck(char *token, char *token_type);
+int fileCheck(char *inputname);
 
 #endif // ends the #ifndef block

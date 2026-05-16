@@ -35,6 +35,9 @@
 					<identifier> other </identifier>
 					<symbol> = </symbol>
 					<expression>
+						<term>
+							<integerConstant> 1 </integerConstant>
+						</term>
 					</expression>
 					<symbol> ; </symbol>
 				</letStatement> </statement>
@@ -42,6 +45,9 @@
 					<keyword> if </keyword>
 					<symbol> ( </symbol>
 					<expression>
+						<term>
+							<identifier> x </identifier>
+						</term>
 					</expression>
 					<symbol> ) </symbol>
 					<symbol> { </symbol>
@@ -51,13 +57,17 @@
 							<identifier> more_data </identifier>
 							<symbol> = </symbol>
 							<expression>
+								<term>
+									<integerConstant> 5 </integerConstant>
+								</term>
 							</expression>
 							<symbol> ; </symbol>
 						</letStatement> </statement>
 						<statement> <doStatement>
 							<statement> do </statement>
-							<subroutineCall>
-							</subroutineCall>
+							<term>
+								<identifier> x </identifier>
+							</term>
 							<symbol> ; </symbol>
 						</doStatement> </statement>
 					</statements>
@@ -66,6 +76,9 @@
 				<statement> <returnStatement>
 					<keyword> return </keyword>
 					<expression>
+						<term>
+							<identifier> x </identifier>
+						</term>
 					</expression>
 					<symbol> ; </symbol>
 				</returnStatement> </statement>
