@@ -6,15 +6,15 @@
 
 void getFirstLine(char *buffer, FILE *filepntr) {
   // Gets next line without setting index to -1
-  // Useful for getting first line and cycling through lines
-  // in skipToEndOfComment
+  // Useful for initializing the buffer and cycling through lines
+  // in skipToEndOfComment.
   memset(buffer, 0, 200);
   fgets(buffer, 200, filepntr);
 }
 
 void getNextLine(int *index, char *buffer, FILE *filepntr) {
   // Jumps to next line of file, resets index to 0 
-  // (i.e. the beginning of the line)-- zeros out the buffer
+  // (i.e. the beginning of the line) -- zeros out the buffer
   // for a clean read.
   memset(buffer, 0, 200);
   *index = -1;
