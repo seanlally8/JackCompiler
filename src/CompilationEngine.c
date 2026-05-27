@@ -4,6 +4,7 @@
 #include "helper.h"
 #include "JackTokenizer.h"
 #include "CompilationEngine.h"
+#include "SymbolTable.h"
 
 void compileClass(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, FILE *filepntr) {
 
@@ -11,6 +12,8 @@ void compileClass(int *tab, int *index, char *buffer, char *token, FILE *filewrt
   // (token_type) for each compiler function to reduce 
   // the bloated parameters list
   char *token_type = NULL;
+
+  node **classTable = initTable(); 
 
   // Opening tag
   fputs("<class>\n", filewrtr);
@@ -50,6 +53,9 @@ void compileClass(int *tab, int *index, char *buffer, char *token, FILE *filewrt
 
   // Closing tag for class non-terminal
   fputs("</class>\n", filewrtr);
+
+  reset(classTable);
+  free(classTable);
 } 
 
 void compileClassVarDec(int *tab, int *index, char *buffer, char *token, 

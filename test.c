@@ -7,49 +7,32 @@ int main(void) {
   node **classTable = initTable();
   node **subroutineTable = initTable();
 
-  int index = 0;     
+  char *name = "counter";
+  char *type = "int";
+  char *kind = "STATIC";
+  char *name2 = "counter2";
+  char *type2 = "char";
+  char *kind2 = "STATIC";
+
+  define(name, type, kind, classTable);
+  define(name2, type2, kind2, classTable);
 
   for (int i = 0; i < HASH_TABLE_SIZE; i++) {
-    node *new = calloc(1, sizeof(node));
-    new->kind = "FIELD";
-    new->name = "varName";
-    new->type = "char";
-    new->index = index; 
-    new->next = NULL;
-    classTable[i] = new;
-    index++;
-  }
-
-  index = 0;
-
-  for (int i = 0; i < HASH_TABLE_SIZE; i++) {
-    node *new = calloc(1, sizeof(node));
-    new->kind = "FIELD";
-    new->name = "varName";
-    new->type = "char";
-    new->index = index; 
-    new->next = NULL;
-    subroutineTable[i] = new;
-    index++;
-  }
-
-  for (int i = 0; i < HASH_TABLE_SIZE; i++) {
-    printf("%s %i\n", classTable[i]->name, classTable[i]->index);
-    printf("%s %i\n", subroutineTable[i]->name, subroutineTable[i]->index);
-  }
-
-  reset(classTable, &index);
-  reset(subroutineTable, &index);
-
-
-  for (int i = 0; i < HASH_TABLE_SIZE; i++) {
-    if (classTable[i] == NULL & subroutineTable[i] == NULL){
-      printf("empty %i\n", ++index);
-      continue;
+    if (classTable[i] != NULL) {
+      for (node *ptr = classTable[i]; ptr != NULL; ptr = ptr->next) {
+        printf("%s     %s     %s     %i\n", ptr->name, ptr->type, ptr->kind, ptr->index);
+      }
     }
-    printf("%s %i\n", classTable[i]->name, classTable[i]->index);
-    printf("%s %i\n", subroutineTable[i]->name, subroutineTable[i]->index);
   }
+
+  int indexof = indexOf(name2, classTable);
+  printf("%i\n", indexof);
+
+  reset(classTable);
+  reset(subroutineTable);
+
+  
+
 
   free(classTable);
   free(subroutineTable);
