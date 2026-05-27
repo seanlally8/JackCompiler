@@ -15,11 +15,10 @@ void compileClass(int *tab, int *index, char *buffer, char *token, FILE *filewrt
   // Opening tag
   fputs("<class>\n", filewrtr);
 
-  // First terminal in class grammar ('class') written 
-  // to xml and next token fetched.
+  // 'class'  
   token_type = process(tab, index, buffer, token, "class", "keyword", filewrtr, filepntr);
 
-  // Second terminal (className)
+  // className 
   if (strcmp(token_type, "identifier") == 0) {
     printXMLToken(tab, token, token_type, filewrtr);
   }
@@ -30,23 +29,23 @@ void compileClass(int *tab, int *index, char *buffer, char *token, FILE *filewrt
   // Get next token
   advance(index, filepntr, buffer, token);
 
-  // Third terminal ('{')
+  // '{'
   token_type = process(tab, index, buffer, token, "{", "symbol", filewrtr, filepntr);
 
-  // First non-terminal (classVarDec*)
+  // classVarDec*
   while (strcmp(token, "static") == 0 || strcmp(token, "field") == 0) {
     printTabs(tab, filewrtr);
     compileClassVarDec(tab, index, buffer, token, filewrtr, filepntr);
   }
 
-  // Second non-terminal (subroutineDec*)
+  // subroutineDec*
   while (strcmp(token, "constructor") == 0 || strcmp(token, "function") == 0
           || strcmp(token, "method") == 0) {
     printTabs(tab, filewrtr);
     compileSubroutine(tab, index, buffer, token, filewrtr, filepntr);
   }
 
-  // Fourth terminal ('}')
+  // '}'
   token_type = process(tab, index, buffer, token, "}", "symbol", filewrtr, filepntr);
 
   // Closing tag for class non-terminal
