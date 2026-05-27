@@ -22,3 +22,19 @@ void reset(node **hashTable, int *index) {
     }
   }
 }
+
+void define(char *name, char *type, char *kind, node **hashTable) {
+  node *new = calloc(1, sizeof(node));
+  if ()
+}
+
+//http://www.cse.yorku.ca/~oz/hash.html -- the djb2 hash function developed by Dan Bernstein
+unsigned long hash(unsigned char *str){
+  unsigned long hash = 5381;
+  int c;
+
+  while ((c = *str++)) {
+      hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+  }
+  return hash;
+}
