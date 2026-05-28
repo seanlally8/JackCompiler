@@ -2,19 +2,21 @@
 #ifndef COMPILATIONENGINE_H // check if myheader_h is not defined
 #define COMPILATIONENGINE_H
 
+#include "SymbolTable.h"
+
 // all your header file code (declarations, etc.) goes here
 void compileClass(int *tab, int *index, char *buffer, char *token, 
                   FILE *filewrtr, FILE *filepntr);
 void compileClassVarDec(int *tab, int *index, char *buffer, char *token, 
-                        FILE *filewrtr, FILE *filepntr);
-void compileSubroutine(int *tab, int *index, char *buffer, char *token, 
+                        FILE *filewrtr, FILE *filepntr, node **hashTable);
+void compileSubroutine(int *tab, int *index, char *buffer, char *token, char *nameOfClass, 
                           FILE *filewrtr, FILE *filepntr);
 void compileParameterList(int *tab, int *index, char *buffer, char *token, char *token_type, 
-                          FILE *filewrtr, FILE *filepntr);
-void compileSubroutineBody(int *tab, int *index, char *buffer, char *token, 
-                           FILE *filewrtr, FILE *filepntr);
-void compileVarDec(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, 
-              FILE *filpntr);
+                          FILE *filewrtr, FILE *filepntr, node **hashTable);
+void compileSubroutineBody(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, 
+                           FILE *filepntr, node **hashTable);
+void compileVarDec(int *tab, int *index, char *buffer, char *token, FILE *filewrtr,  
+                  FILE *filepntr, node **hashTable);
 void compileStatements(int *tab, int *index, char *buffer, char *token, 
                        FILE *filewrtr, FILE *filepntr);
 void compileStatement(int *tab, int *index, char *buffer, char *token, 

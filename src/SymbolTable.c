@@ -18,6 +18,9 @@ void reset(node **hashTable) {
       node *ptr = hashTable[i];
       while (ptr != NULL) {
         node *next = ptr->next;
+        free(ptr->name);
+        free(ptr->kind);
+        free(ptr->type);
         free(ptr);
         ptr = next;
       }
@@ -32,12 +35,15 @@ void define(char *name, char *type, char *kind, node **hashTable) {
     printf("calloc failed to return 'new' pointer\n");
     return;
   }
+  new->name = calloc(1, strlen(name) + 1);
+  new->kind = calloc(1, strlen(kind) + 1);
+  new->type = calloc(1, strlen(type) +1);
   int hash_num = hash((unsigned char *)name) % 211;
 
   // Prepend node (add entry to symbol table)
-  new->name = name;
-  new->kind = kind;
-  new->type = type;
+  strcpy(new->name, name);
+  strcpy(new->kind, kind);
+  strcpy(new->type, type);
   new->index = varCount(kind, hashTable);
   new->next = hashTable[hash_num];
   hashTable[hash_num] = new;
@@ -48,7 +54,7 @@ int varCount(char *kind, node **hashTable) {
   for (int i = 0; i < HASH_TABLE_SIZE; i++) {
     if (hashTable[i] != NULL) {
       for (node *ptr = hashTable[i]; ptr != NULL; ptr=ptr->next) {
-        if (ptr->kind == kind) {
+        if (strcmp(ptr->kind, kind) == 0) {
           varcounter++;
         }
       }
@@ -100,6 +106,16 @@ int indexOf(char *name, node **hashTable) {
     }
   }
   return -1;
+}
+
+void printTable(node **hashTable) {
+  for (int i = 0; i < HASH_TABLE_SIZE; i++) {
+    if (hashTable[i] != NULL) {
+      for (node *ptr = hashTable[i]; ptr != NULL; ptr = ptr->next) {
+        printf("%s   %s   %s   %i\n", ptr->name, ptr->type, ptr->kind, ptr->index);
+      }
+    }
+  }
 }
 
 //http://www.cse.yorku.ca/~oz/hash.html -- the djb2 hash function developed by Dan Bernstein

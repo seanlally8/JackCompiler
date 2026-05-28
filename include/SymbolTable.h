@@ -20,6 +20,7 @@ int varCount(char *kind, node **hashTable);
 char *kindOf(char *name, node **hashTable);
 char *typeOf(char *name, node **hashTable);
 int indexOf(char *name, node **hashTable);
+void printTable(node **hashTable);
 unsigned long hash(unsigned char *str);
 
 #endif // ends the #ifndef block

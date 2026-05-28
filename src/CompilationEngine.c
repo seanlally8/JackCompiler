@@ -12,6 +12,7 @@ void compileClass(int *tab, int *index, char *buffer, char *token, FILE *filewrt
   // (token_type) for each compiler function to reduce 
   // the bloated parameters list
   char *token_type = NULL;
+  
 
   node **classTable = initTable(); 
 
@@ -20,9 +21,12 @@ void compileClass(int *tab, int *index, char *buffer, char *token, FILE *filewrt
 
   // 'class'  
   token_type = process(tab, index, buffer, token, "class", "keyword", filewrtr, filepntr);
+  
+  char *nameOfClass = calloc(1, strlen(token) + 1);
 
   // className 
   if (strcmp(token_type, "identifier") == 0) {
+    strcpy(nameOfClass, token);
     printXMLToken(tab, token, token_type, filewrtr);
   }
   else {
@@ -38,14 +42,18 @@ void compileClass(int *tab, int *index, char *buffer, char *token, FILE *filewrt
   // classVarDec*
   while (strcmp(token, "static") == 0 || strcmp(token, "field") == 0) {
     printTabs(tab, filewrtr);
-    compileClassVarDec(tab, index, buffer, token, filewrtr, filepntr);
+    compileClassVarDec(tab, index, buffer, token, filewrtr, filepntr, classTable);
   }
+
+  printf("CLASS TABLE\n");
+  printTable(classTable);
+  printf("----------------\n");
 
   // subroutineDec*
   while (strcmp(token, "constructor") == 0 || strcmp(token, "function") == 0
           || strcmp(token, "method") == 0) {
     printTabs(tab, filewrtr);
-    compileSubroutine(tab, index, buffer, token, filewrtr, filepntr);
+    compileSubroutine(tab, index, buffer, token, nameOfClass, filewrtr, filepntr);
   }
 
   // '}'
@@ -56,11 +64,13 @@ void compileClass(int *tab, int *index, char *buffer, char *token, FILE *filewrt
 
   reset(classTable);
   free(classTable);
+  free(nameOfClass);
 } 
 
 void compileClassVarDec(int *tab, int *index, char *buffer, char *token, 
-                        FILE *filewrtr, FILE *filepntr) {
+                        FILE *filewrtr, FILE *filepntr, node **hashTable) {
   char *token_type = NULL;
+  char *tableItems[3] = {0};
 
   // Increment number of tabs
   (*tab)++;
@@ -68,12 +78,16 @@ void compileClassVarDec(int *tab, int *index, char *buffer, char *token,
   // Opening tag for class-level variable declarations
   fputs("<classVarDec>\n", filewrtr);
 
-  // First terminal ('static'|'field') 
+  // ('static'|'field') 
+  tableItems[0] = calloc(1, (strlen(token) + 1));
+  strcpy(tableItems[0], token);
   token_type = process(tab, index, buffer, token, token, "keyword", filewrtr, filepntr);
   
-  // Second terminal ('int' | 'boolean' | 'char' | className)
+  // ('int' | 'boolean' | 'char' | className)
   if (strcmp(token, "int") == 0 || strcmp(token, "boolean") == 0 
       || strcmp(token, "char") == 0 || strcmp(token_type, "identifier") == 0) {
+    tableItems[1] = calloc(1, (strlen(token) + 1));
+    strcpy(tableItems[1], token);
     printXMLToken(tab, token, token_type, filewrtr);
   } 
   else {
@@ -85,11 +99,16 @@ void compileClassVarDec(int *tab, int *index, char *buffer, char *token,
 
   // Third terminal (varName)
   if (strcmp(token_type, "identifier") == 0) {
+    tableItems[2] = calloc(1, (strlen(token) + 1));
+    strcpy(tableItems[2], token);
     printXMLToken(tab, token, token_type, filewrtr);
   }
   else {
     printf("Syntax Error in compileClass\n");
   }
+
+  define(tableItems[2], tableItems[1], tableItems[0], hashTable);
+  free(tableItems[2]);
 
   // Get next token
   advance(index, filepntr, buffer, token);
@@ -98,6 +117,10 @@ void compileClassVarDec(int *tab, int *index, char *buffer, char *token,
   while (strcmp(token, ",") == 0) {
     token_type = process(tab, index, buffer, token, ",", "symbol", filewrtr, filepntr);
     if (strcmp(token_type, "identifier") == 0) {
+      tableItems[2] = calloc(1, strlen(token) + 1);
+      strcpy(tableItems[2], token);
+      define(tableItems[2], tableItems[1], tableItems[0], hashTable);
+      free(tableItems[2]);
       printXMLToken(tab, token, token_type, filewrtr);
     }
     else {
@@ -115,21 +138,30 @@ void compileClassVarDec(int *tab, int *index, char *buffer, char *token,
   // Closing tag for class-level variable declarations
   printTabs(tab, filewrtr);
   fputs("</classVarDec>\n", filewrtr);
+
+  for (int i = 0; i < 2; i++) {
+    free(tableItems[i]);
+  }
 }
 
-void compileSubroutine(int *tab, int *index, char *buffer, char *token, 
+void compileSubroutine(int *tab, int *index, char *buffer, char *token, char *nameOfClass, 
                           FILE *filewrtr, FILE *filepntr) {
   char *token_type = NULL;
+
+  node **subroutineTable = initTable();
 
   (*tab)++;
   
   // Opening tag for subroutine 
   fputs("<subroutineDec>\n", filewrtr);
 
-  // First terminal ('method' |'function' | 'method')
+  // First terminal ('method' |'function' | 'constructor')
+  if (strcmp(token, "method") ==0) {
+    define("this", nameOfClass, "arg", subroutineTable);
+  }
   token_type = process(tab, index, buffer, token, token, "keyword", filewrtr, filepntr);
 
-  // Second terminal ('void' | type)
+  // ('void' | type)
   if (strcmp(token, "void") == 0 || strcmp(token, "int") == 0 
       || strcmp(token, "boolean") == 0 || strcmp(token, "char") == 0
       || strcmp(token_type, "identifier") == 0) {
@@ -142,7 +174,7 @@ void compileSubroutine(int *tab, int *index, char *buffer, char *token,
   // Get next token
   token_type = advance(index, filepntr, buffer, token);
 
-  // Third terminal (subroutineName)
+  // subroutineName
   if (strcmp(token_type, "identifier") == 0) {
     printXMLToken(tab, token, token_type, filewrtr);
   }
@@ -152,19 +184,19 @@ void compileSubroutine(int *tab, int *index, char *buffer, char *token,
 
   advance(index, filepntr, buffer, token);
 
-  // Fourth terminal ('(')
+  // '('
   token_type = process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr);
 
-  // First non-terminal (parameterList)
+  // parameterList
   printTabs(tab, filewrtr);
-  compileParameterList(tab, index, buffer, token, token_type, filewrtr, filepntr);
+  compileParameterList(tab, index, buffer, token, token_type, filewrtr, filepntr, subroutineTable);
 
-  // Fifth terminal (')')
+  // ')'
   token_type = process(tab, index, buffer, token, ")", "symbol", filewrtr, filepntr);
 
-  // Second non-terminal (subroutineBody)
+  // subroutineBody
   printTabs(tab, filewrtr);
-  compileSubroutineBody(tab, index, buffer, token, filewrtr, filepntr);
+  compileSubroutineBody(tab, index, buffer, token, filewrtr, filepntr, subroutineTable);
 
   (*tab)--;
 
@@ -172,19 +204,30 @@ void compileSubroutine(int *tab, int *index, char *buffer, char *token,
   printTabs(tab, filewrtr);
   fputs("</subroutineDec>\n", filewrtr);
 
+  printf("SUBROUTINE TABLE\n");
+  printTable(subroutineTable);
+  printf("-------------\n");
+
+  reset(subroutineTable);
+  free(subroutineTable);
+
 }
 
 void compileParameterList(int *tab, int *index, char *buffer, char *token, char *token_type, 
-                          FILE *filewrtr, FILE *filepntr) {
+                          FILE *filewrtr, FILE *filepntr, node **hashTable) {
+
+  char *tableItems[2] = {0};
 
   (*tab)++;
 
   // Opening tag for parameterList
   fputs("<parameterList>\n", filewrtr);
 
-  // First terminal (type) -- 
+  // type 
   // if not a type, assume empty parameter list
   if (typeCheck(token, token_type)) {
+    tableItems[0] = calloc(1, (strlen(token) + 1));
+    strcpy(tableItems[0], token);
     printXMLToken(tab, token, token_type, filewrtr);
     token_type = advance(index, filepntr, buffer, token);
   }
@@ -197,6 +240,8 @@ void compileParameterList(int *tab, int *index, char *buffer, char *token, char 
 
   // Second terminal (varName)
   if (strcmp(token_type, "identifier") == 0) {
+    tableItems[1] = calloc(1, (strlen(token) + 1));
+    strcpy(tableItems[1], token);
     printXMLToken(tab, token, token_type, filewrtr);
     token_type = advance(index, filepntr, buffer, token);
   }
@@ -204,11 +249,20 @@ void compileParameterList(int *tab, int *index, char *buffer, char *token, char 
     printf("Syntax Error in compileParameterList: no varName\n");
   }
 
+  // Add first parameter to table
+  define(tableItems[1], tableItems[0], "arg", hashTable);
 
-  // Beginning of (',' varName)*
+  for (int i = 0; i < 2; i++) {
+    free(tableItems[i]);
+  }
+
+
+  // Beginning of (',' type varName)*
   while (strcmp(token, ",") == 0) {
     token_type = process(tab, index, buffer, token, ",", "symbol", filewrtr, filepntr);
     if (typeCheck(token, token_type)) {
+      tableItems[0] = calloc(1, strlen(token) + 1);
+      strcpy(tableItems[0], token);
       printXMLToken(tab, token, token_type, filewrtr);
       token_type = advance(index, filepntr, buffer, token);
     }
@@ -216,11 +270,17 @@ void compileParameterList(int *tab, int *index, char *buffer, char *token, char 
       printf("Syntax Error in compileParameterList: No type in one of the parameter\n");
     }
     if (strcmp(token_type, "identifier") == 0) {
+      tableItems[1] = calloc(1, strlen(token) + 1);
+      strcpy(tableItems[1], token);
       printXMLToken(tab, token, token_type, filewrtr);
       token_type = advance(index, filepntr, buffer, token);
     }
     else {
       printf("Syntax error in compileParamterList: no varName in one of the parameters\n");
+    }
+    define(tableItems[1], tableItems[0], "arg", hashTable);
+    for (int i = 0; i < 2; i++) {
+      free(tableItems[i]);
     }
   }
 
@@ -232,7 +292,7 @@ void compileParameterList(int *tab, int *index, char *buffer, char *token, char 
 }
 
 void compileSubroutineBody(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, 
-                           FILE *filepntr) {
+                           FILE *filepntr, node **hashTable) {
 
   (*tab)++;
   // Opening tag for subroutineBody
@@ -244,8 +304,9 @@ void compileSubroutineBody(int *tab, int *index, char *buffer, char *token, FILE
   // Implementation of varDec*
   while (strcmp(token, "var") == 0) {
     printTabs(tab, filewrtr);
-    compileVarDec(tab, index, buffer, token, filewrtr, filepntr);
+    compileVarDec(tab, index, buffer, token, filewrtr, filepntr, hashTable);
   }
+
 
   // Implementation of statements rule
   printTabs(tab, filewrtr);
@@ -261,8 +322,9 @@ void compileSubroutineBody(int *tab, int *index, char *buffer, char *token, FILE
   fputs("</subroutineBody>\n", filewrtr);
 }
 
-void compileVarDec(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, FILE *filepntr) {
+void compileVarDec(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, FILE *filepntr, node **hashTable) {
   char *token_type = NULL;
+  char *tableItems[2] = {0};
 
   (*tab)++;
 
@@ -274,6 +336,8 @@ void compileVarDec(int *tab, int *index, char *buffer, char *token, FILE *filewr
 
   // Second terminal (type)
   if (typeCheck(token, token_type)) {
+    tableItems[0] = calloc(1, strlen(token) + 1);
+    strcpy(tableItems[0], token);
     printXMLToken(tab, token, token_type, filewrtr);
   }
   else {
@@ -285,11 +349,16 @@ void compileVarDec(int *tab, int *index, char *buffer, char *token, FILE *filewr
 
   // Check for varName
   if (strcmp(token_type, "identifier") == 0) {
+    tableItems[1] = calloc(1, strlen(token) + 1);
+    strcpy(tableItems[1], token);
     printXMLToken(tab, token, token_type, filewrtr);
   }
   else {
     printf("Syntax error in compileVarDec: no varName given\n");
   }
+
+  define(tableItems[1], tableItems[0], "var", hashTable);
+  free(tableItems[1]);
 
   // Get next token
   token_type = advance(index, filepntr, buffer, token);
@@ -299,6 +368,10 @@ void compileVarDec(int *tab, int *index, char *buffer, char *token, FILE *filewr
     token_type = process(tab, index, buffer, token, ",", "symbol", filewrtr, filepntr);
 
     if (strcmp(token_type, "identifier") == 0) {
+      tableItems[1] = calloc(1, strlen(token) + 1);
+      strcpy(tableItems[1], token);
+      define(tableItems[1], tableItems[0], "var", hashTable);
+      free(tableItems[1]);
       printXMLToken(tab, token, token_type, filewrtr);
     }
     else {
@@ -307,6 +380,8 @@ void compileVarDec(int *tab, int *index, char *buffer, char *token, FILE *filewr
 
     token_type = advance(index, filepntr, buffer, token);
   }
+
+  free(tableItems[0]);
 
   // Last terminal ';'
   token_type = process(tab, index, buffer, token, ";", "symbol", filewrtr, filepntr);
