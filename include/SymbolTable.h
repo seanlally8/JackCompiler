@@ -12,15 +12,23 @@ typedef struct node {
   struct node *next;
 } node;
 
+// Define classNode datatype to hold a hashtable and a pointer to another hashtable
+typedef struct tableNode {
+  char *tableType;
+  node *hashTable[HASH_TABLE_SIZE];
+  struct tableNode *nextTable;
+} tableNode;
+
 // all your header file code (declarations, etc.) goes here
-node **initTable(void);
-void reset(node **hashTable);
-void define(char *name, char *type, char *kind, node **hashTable);
-int varCount(char *kind, node **hashTable);
-char *kindOf(char *name, node **hashTable);
-char *typeOf(char *name, node **hashTable);
-int indexOf(char *name, node **hashTable);
-void printTable(node **hashTable);
+tableNode *initTable(tableNode *firstTable);
+void reset(tableNode *firstTable);
+void define(char *name, char *type, char *kind, tableNode *firstTable);
+int varCount(char *kind, tableNode *firstTable);
+char *kindOf(char *name, tableNode *firstTable);
+char *typeOf(char *name, tableNode *firstTable);
+int indexOf(char *name, tableNode *firstTable);
+void printTable(tableNode *firstTable);
+tableNode *selectTable(tableNode*firstTable);
 unsigned long hash(unsigned char *str);
 
 #endif // ends the #ifndef block

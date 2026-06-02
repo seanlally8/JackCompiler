@@ -2,7 +2,12 @@
 #include <string.h>
 
 void writePush(FILE *filewrtr, char *vmSegment, int *vmIndex) {
-  fprintf(filewrtr, "\tpush %s %i\n", vmSegment, *vmIndex);
+  if (strcmp(vmSegment, "field") == 0) {
+    fprintf(filewrtr, "\tpush this %i\n", *vmIndex);
+  }
+  else {
+    fprintf(filewrtr, "\tpush %s %i\n", vmSegment, *vmIndex);
+  }
 }
 
 void writeFunction(FILE *filewrtr, char *className, char *subroutineName, int *nVars) {
@@ -41,7 +46,12 @@ void writeCall(FILE *filewrtr, char *className, char *subroutineName, int *nArgs
 }
 
 void writePop(FILE *filewrtr, char *vmSegment, int *vmIndex) {
-  fprintf(filewrtr, "\tpop %s %i\n", vmSegment, *vmIndex);
+  if (strcmp(vmSegment, "field") == 0) {
+    fprintf(filewrtr, "\tpop this %i\n", *vmIndex);
+  }
+  else {
+    fprintf(filewrtr, "\tpop %s %i\n", vmSegment, *vmIndex);
+  }
 }
 
 void writeReturn(FILE *filewrtr) {

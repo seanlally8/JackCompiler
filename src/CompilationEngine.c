@@ -13,11 +13,12 @@ void compileClass(int *tab, int *index, char *buffer, char *token, FILE *filewrt
   // (token_type) for each compiler function to reduce 
   // the bloated parameters list
   char *token_type = NULL;
-  
+  tableNode *firstTable = NULL;
 
-  node **classTable = initTable(); 
+  firstTable = initTable(firstTable); 
 
-  // Opening tag
+  firstTable->tableType = calloc(6, sizeof(char));
+  strcpy(firstTable->tableType, "class");
 
   // 'class'  
   token_type = process(tab, index, buffer, token, "class", "keyword", filewrtr, filepntr);
@@ -40,37 +41,31 @@ void compileClass(int *tab, int *index, char *buffer, char *token, FILE *filewrt
 
   // classVarDec*
   while (strcmp(token, "static") == 0 || strcmp(token, "field") == 0) {
-    compileClassVarDec(tab, index, buffer, token, filewrtr, filepntr, classTable);
+    compileClassVarDec(tab, index, buffer, token, filewrtr, filepntr, firstTable);
   }
 
   printf("CLASS TABLE\n");
-  printTable(classTable);
+  printTable(firstTable);
   printf("----------------\n");
 
   // subroutineDec*
   while (strcmp(token, "constructor") == 0 || strcmp(token, "function") == 0
           || strcmp(token, "method") == 0) {
-    compileSubroutine(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, labelList);
+    compileSubroutine(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, labelList, firstTable);
   }
 
   // '}'
   token_type = process(tab, index, buffer, token, "}", "symbol", filewrtr, filepntr);
 
-  // Closing tag for class non-terminal
-
-  reset(classTable);
-  free(classTable);
+  reset(firstTable);
+  free(firstTable);
   free(nameOfClass);
 } 
 
 void compileClassVarDec(int *tab, int *index, char *buffer, char *token, 
-                        FILE *filewrtr, FILE *filepntr, node **hashTable) {
+                        FILE *filewrtr, FILE *filepntr, tableNode *firstTable) {
   char *token_type = NULL;
   char *tableItems[3] = {0};
-
-  // Increment number of tabs
-
-  // Opening tag for class-level variable declarations
 
   // ('static'|'field') 
   tableItems[0] = calloc(1, (strlen(token) + 1));
@@ -99,7 +94,7 @@ void compileClassVarDec(int *tab, int *index, char *buffer, char *token,
     printf("Syntax Error in compileClass\n");
   }
 
-  define(tableItems[2], tableItems[1], tableItems[0], hashTable);
+  define(tableItems[2], tableItems[1], tableItems[0], firstTable);
   free(tableItems[2]);
 
   // Get next token
@@ -111,7 +106,7 @@ void compileClassVarDec(int *tab, int *index, char *buffer, char *token,
     if (strcmp(token_type, "identifier") == 0) {
       tableItems[2] = calloc(1, strlen(token) + 1);
       strcpy(tableItems[2], token);
-      define(tableItems[2], tableItems[1], tableItems[0], hashTable);
+      define(tableItems[2], tableItems[1], tableItems[0], firstTable);
       free(tableItems[2]);
     }
     else {
@@ -123,25 +118,24 @@ void compileClassVarDec(int *tab, int *index, char *buffer, char *token,
   // Final terminal (";")
   process(tab, index, buffer, token, ";", "symbol", filewrtr, filepntr);
 
-  // Decrement number of tabs before returning
-
-  // Closing tag for class-level variable declarations
-
   for (int i = 0; i < 2; i++) {
     free(tableItems[i]);
   }
 }
 
 void compileSubroutine(int *tab, int *index, char *buffer, char *token, char *nameOfClass, 
-                          FILE *filewrtr, FILE *filepntr, labelNode *labelList) {
+                          FILE *filewrtr, FILE *filepntr, labelNode *labelList, tableNode *firstTable) {
   char *token_type = NULL;
 
-  node **subroutineTable = initTable();
+  firstTable = initTable(firstTable);
 
   // ('method' |'function' | 'constructor')
+  firstTable->nextTable->tableType = calloc(1, strlen(token) + 1);
+  strcpy(firstTable->nextTable->tableType, token);
   if (strcmp(token, "method") == 0) {
-    define("this", nameOfClass, "argument", subroutineTable);
+    define("this", nameOfClass, "argument", firstTable);
   }
+
   token_type = process(tab, index, buffer, token, token, "keyword", filewrtr, filepntr);
 
   // ('void' | type)
@@ -172,27 +166,28 @@ void compileSubroutine(int *tab, int *index, char *buffer, char *token, char *na
   token_type = process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr);
 
   // parameterList
-  compileParameterList(tab, index, buffer, token, token_type, filewrtr, filepntr, subroutineTable);
+  compileParameterList(tab, index, buffer, token, token_type, filewrtr, filepntr, firstTable);
 
   // ')'
   token_type = process(tab, index, buffer, token, ")", "symbol", filewrtr, filepntr);
 
   // subroutineBody
-  compileSubroutineBody(tab, index, buffer, token, nameOfClass, subroutineName, filewrtr, filepntr, subroutineTable, labelList);
+  compileSubroutineBody(tab, index, buffer, token, nameOfClass, subroutineName, filewrtr, filepntr, labelList, firstTable);
 
   // Print subroutine symbol table to stdout
   printf("SUBROUTINE TABLE\n");
-  printTable(subroutineTable);
+  printTable(firstTable);
   printf("-------------\n");
 
   // free nodes of hashtable with reset then free remaining heap memory
-  reset(subroutineTable);
-  free(subroutineTable);
+  reset(firstTable);
+  free(firstTable->nextTable);
+  firstTable->nextTable = NULL;
   free(subroutineName);
 }
 
 void compileParameterList(int *tab, int *index, char *buffer, char *token, char *token_type, 
-                          FILE *filewrtr, FILE *filepntr, node **hashTable) {
+                          FILE *filewrtr, FILE *filepntr, tableNode *firstTable) {
 
   char *tableItems[2] = {0};
 
@@ -218,7 +213,7 @@ void compileParameterList(int *tab, int *index, char *buffer, char *token, char 
   }
 
   // Add first parameter to table
-  define(tableItems[1], tableItems[0], "argument", hashTable);
+  define(tableItems[1], tableItems[0], "argument", firstTable);
 
   // Free the tableItems array so it can be resized for any following variables
   for (int i = 0; i < 2; i++) {
@@ -245,7 +240,7 @@ void compileParameterList(int *tab, int *index, char *buffer, char *token, char 
     else {
       printf("Syntax error in compileParamterList: no varName in one of the parameters\n");
     }
-    define(tableItems[1], tableItems[0], "argument", hashTable);
+    define(tableItems[1], tableItems[0], "argument", firstTable);
     for (int i = 0; i < 2; i++) {
       free(tableItems[i]);
     }
@@ -253,7 +248,7 @@ void compileParameterList(int *tab, int *index, char *buffer, char *token, char 
 }
 
 void compileSubroutineBody(int *tab, int *index, char *buffer, char *token, char *nameOfClass, char *subroutineName, FILE *filewrtr,  
-                           FILE *filepntr, node **hashTable, labelNode *labelList) {
+                           FILE *filepntr, labelNode *labelList, tableNode *firstTable) {
 
   int varcounter = 0;
 
@@ -262,29 +257,31 @@ void compileSubroutineBody(int *tab, int *index, char *buffer, char *token, char
 
   // varDec*
   while (strcmp(token, "var") == 0) {
-    compileVarDec(tab, index, buffer, token, filewrtr, filepntr, hashTable);
+    compileVarDec(tab, index, buffer, token, filewrtr, filepntr, firstTable);
   }
 
   // Code generator
-  varcounter = varCount("local", hashTable);
+  varcounter = varCount("local", firstTable);
   writeFunction(filewrtr, nameOfClass, subroutineName, &varcounter);
-  varcounter = varCount("field", hashTable);
-  writePush(filewrtr, "constant", &varcounter);
-  int nArg = 1;
-  writeCall(filewrtr, nameOfClass, subroutineName, &nArg);
-  int this = 0;
-  writePop(filewrtr, "pointer", &this);
-
+  printf("#######%s\n", firstTable->nextTable->tableType);
+  if (strcmp(firstTable->nextTable->tableType, "constructor") == 0) {
+    varcounter = varCount("field", firstTable);
+    writePush(filewrtr, "constant", &varcounter);
+    int nArg = 1;
+    writeCall(filewrtr, "Memory", "alloc", &nArg);
+    int this = 0;
+    writePop(filewrtr, "pointer", &this);
+  }
 
   // Implementation of statements rule
-  compileStatements(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, hashTable, labelList);
+  compileStatements(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, firstTable, labelList);
 
   // Second terminal ('}')
   process(tab, index, buffer, token, "}", "symbol", filewrtr, filepntr);
 
 }
 
-void compileVarDec(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, FILE *filepntr, node **hashTable) {
+void compileVarDec(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, FILE *filepntr, tableNode *firstTable) {
   char *token_type = NULL;
   char *tableItems[2] = {0};
 
@@ -312,7 +309,7 @@ void compileVarDec(int *tab, int *index, char *buffer, char *token, FILE *filewr
     printf("Syntax error in compileVarDec: no varName given\n");
   }
 
-  define(tableItems[1], tableItems[0], "local", hashTable);
+  define(tableItems[1], tableItems[0], "local", firstTable);
   free(tableItems[1]);
 
   // Get next token
@@ -325,7 +322,7 @@ void compileVarDec(int *tab, int *index, char *buffer, char *token, FILE *filewr
     if (strcmp(token_type, "identifier") == 0) {
       tableItems[1] = calloc(1, strlen(token) + 1);
       strcpy(tableItems[1], token);
-      define(tableItems[1], tableItems[0], "local", hashTable);
+      define(tableItems[1], tableItems[0], "local", firstTable);
       free(tableItems[1]);
     }
     else {
@@ -341,46 +338,46 @@ void compileVarDec(int *tab, int *index, char *buffer, char *token, FILE *filewr
   token_type = process(tab, index, buffer, token, ";", "symbol", filewrtr, filepntr);
 }
 
-void compileStatements(int *tab, int *index, char *buffer, char *token, char *nameOfClass, FILE *filewrtr, FILE *filepntr, node **hashTable, labelNode *labelList) {
+void compileStatements(int *tab, int *index, char *buffer, char *token, char *nameOfClass, FILE *filewrtr, FILE *filepntr, tableNode *firstTable, labelNode *labelList) {
 
   // statement*
   while (strcmp(token, "let") == 0 || strcmp(token, "while") == 0 || strcmp(token, "if") == 0 
       || strcmp(token, "do") == 0 || strcmp(token, "return") == 0) {
-    compileStatement(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, hashTable, labelList);
+    compileStatement(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, firstTable, labelList);
   }
 }
 
-void compileStatement(int *tab, int *index, char *buffer, char *token, char *nameOfClass, FILE *filewrtr, FILE *filepntr, node **hashTable, labelNode *labelList) {
+void compileStatement(int *tab, int *index, char *buffer, char *token, char *nameOfClass, FILE *filewrtr, FILE *filepntr, tableNode *firstTable, labelNode *labelList) {
 
   if (strcmp(token, "let") == 0) {
-    compileLet(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, hashTable);
+    compileLet(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, firstTable);
   }
   else if (strcmp(token, "if") == 0) {
-    compileIf(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, hashTable, labelList);
+    compileIf(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, firstTable, labelList);
   }
   else if (strcmp(token, "while") == 0) {
-    compileWhile(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, hashTable, labelList);
+    compileWhile(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, firstTable, labelList);
   }
   else if (strcmp(token, "do") == 0) {
-    compileDo(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, hashTable);
+    compileDo(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, firstTable);
   }
   else if (strcmp(token, "return") == 0) {
-    compileReturn(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, hashTable);
+    compileReturn(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, firstTable);
   }
   
 }
 
-void compileLet(int *tab, int *index, char *buffer, char *token, char *nameOfClass, FILE *filewrtr, FILE *filepntr, node **hashTable) {
+void compileLet(int *tab, int *index, char *buffer, char *token, char *nameOfClass, FILE *filewrtr, FILE *filepntr, tableNode *firstTable) {
   char *token_type = NULL;
 
   // 'let'
   token_type = process(tab, index, buffer, token, "let", "keyword", filewrtr, filepntr);
 
   // varName
-  char *vmSegment = kindOf(token, hashTable);
+  char *vmSegment = kindOf(token, firstTable);
   int vmIndex;
   if (strcmp(token_type, "identifier") == 0) {
-    vmIndex = indexOf(token, hashTable);
+    vmIndex = indexOf(token, firstTable);
   }
   else {
     printf("Syntax error in compileVarDec: missing varName following ','\n");
@@ -393,7 +390,7 @@ void compileLet(int *tab, int *index, char *buffer, char *token, char *nameOfCla
   if (strcmp(token, "[") == 0) {
     token_type = process(tab, index, buffer, token, "[", "symbol", filewrtr, filepntr);
 
-    compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, hashTable);
+    compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
 
     token_type = process(tab, index, buffer, token, "]", "symbol", filewrtr, filepntr);
   }
@@ -402,7 +399,7 @@ void compileLet(int *tab, int *index, char *buffer, char *token, char *nameOfCla
   token_type = process(tab, index, buffer, token, "=", "symbol", filewrtr, filepntr);
 
   // expression
-  compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, hashTable);
+  compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
   writePop(filewrtr, vmSegment, &vmIndex);
 
   // ';'
@@ -410,7 +407,7 @@ void compileLet(int *tab, int *index, char *buffer, char *token, char *nameOfCla
 
 }
 
-void compileIf(int *tab, int *index, char *buffer, char *token, char *nameOfClass, FILE *filewrtr, FILE *filepntr, node **hashTable, labelNode *labelList) {
+void compileIf(int *tab, int *index, char *buffer, char *token, char *nameOfClass, FILE *filewrtr, FILE *filepntr, tableNode *firstTable, labelNode *labelList) {
   char *token_type = NULL;
 
   // prepend new incremented node to keep track of current label number for duration of program
@@ -429,7 +426,7 @@ void compileIf(int *tab, int *index, char *buffer, char *token, char *nameOfClas
   token_type = process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr);
 
   // expression
-  compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, hashTable);
+  compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
   writeArithmetic(filewrtr, "~");
   writeIf(filewrtr, labelList->next->label1);
 
@@ -440,7 +437,7 @@ void compileIf(int *tab, int *index, char *buffer, char *token, char *nameOfClas
   process(tab, index, buffer, token, "{", "symbol", filewrtr, filepntr);
 
   // statements
-  compileStatements(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, hashTable, labelList);
+  compileStatements(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, firstTable, labelList);
   writeGoTo(filewrtr, labelList->next->label2);
   writeLabel(filewrtr, labelList->next->label1);
 
@@ -451,7 +448,7 @@ void compileIf(int *tab, int *index, char *buffer, char *token, char *nameOfClas
   if (strcmp(token, "else") == 0) {
     process(tab, index, buffer, token, "else", "keyword", filewrtr, filepntr);
     process(tab, index, buffer, token, "{", "symbol", filewrtr, filepntr);
-    compileStatements(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, hashTable, labelList);
+    compileStatements(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, firstTable, labelList);
     process(tab, index, buffer, token, "}", "symbol", filewrtr, filepntr);
   }
   writeLabel(filewrtr, labelList->next->label2);
@@ -463,7 +460,7 @@ void compileIf(int *tab, int *index, char *buffer, char *token, char *nameOfClas
   }
 }
 
-void compileWhile(int *tab, int *index, char *buffer, char *token, char *nameOfClass, FILE *filewrtr, FILE *filepntr, node **hashTable, labelNode *labelList) {
+void compileWhile(int *tab, int *index, char *buffer, char *token, char *nameOfClass, FILE *filewrtr, FILE *filepntr, tableNode *firstTable, labelNode *labelList) {
   char *token_type = NULL;
 
   // prepend new incremented node to keep track of current label number for duration of program
@@ -484,7 +481,7 @@ void compileWhile(int *tab, int *index, char *buffer, char *token, char *nameOfC
   token_type = process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr);
   
   // expression
-  compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, hashTable);
+  compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
 
   writeArithmetic(filewrtr, "~");
   writeIf(filewrtr, labelList->next->label2);
@@ -496,7 +493,7 @@ void compileWhile(int *tab, int *index, char *buffer, char *token, char *nameOfC
   process(tab, index, buffer, token, "{", "symbol", filewrtr, filepntr);
 
   // statements
-  compileStatements(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, hashTable, labelList);
+  compileStatements(tab, index, buffer, token, nameOfClass, filewrtr, filepntr, firstTable, labelList);
   
   writeGoTo(filewrtr, labelList->next->label1);
 
@@ -513,7 +510,7 @@ void compileWhile(int *tab, int *index, char *buffer, char *token, char *nameOfC
   }
 }
 
-void compileDo(int *tab, int *index, char *buffer, char *token, char *nameOfClass, FILE *filewrtr, FILE *filepntr, node **hashTable) {
+void compileDo(int *tab, int *index, char *buffer, char *token, char *nameOfClass, FILE *filewrtr, FILE *filepntr, tableNode *firstTable) {
   char *token_type = NULL;
 
   // 'do'
@@ -522,27 +519,74 @@ void compileDo(int *tab, int *index, char *buffer, char *token, char *nameOfClas
   char *next_token = tokenLookAhead(index, filepntr, buffer);
 
   // subroutineCall
+  char *vmSegment = kindOf(token, firstTable);
   char *subroutineName = calloc(1, strlen(token) + 1);
   strcpy(subroutineName, token);
+  // if it is method of the implicit kind: this.methodName(args)
   if (strcmp(token_type, "identifier") == 0 && next_token[0] == '(') {
+    // Push mapping of 'this'
+    int zero = 0;
+    writePush(filewrtr, "pointer", &zero);
+
     advance(index, filepntr, buffer, token);
     token_type = process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr);
-    compileExpressionList(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, hashTable);
+
+    int argcounter = compileExpressionList(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
+    argcounter++;
     process(tab, index, buffer, token, ")", "symbol", filewrtr, filepntr); 
-    int argcounter = varCount("arg", hashTable);
+
     writeCall(filewrtr, nameOfClass, subroutineName, &argcounter);
+    writePop(filewrtr, "temp", &zero);
+
     free(subroutineName);
   }
-  else if (strcmp(token_type, "identifier") == 0 && next_token[0] == '.') {
+  // If it is a method
+  else if (strcmp(token_type, "identifier") == 0 && next_token[0] == '.' && strcmp(vmSegment, "NONE") != 0) {
+    // push varName index
+    int vmIndex = indexOf(token, firstTable);
+    writePush(filewrtr, vmSegment, &vmIndex);
+
     advance(index, filepntr, buffer, token);
     token_type = process(tab, index, buffer, token, ".", "symbol", filewrtr, filepntr); 
+
     char *subroutineName2 = calloc(1, strlen(token) + 1);
     strcpy(subroutineName2, token);
+
     advance(index, filepntr, buffer, token);
     token_type = process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr); 
-    int argcounter = compileExpressionList(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, hashTable);
+
+    int argcounter = compileExpressionList(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
+    argcounter++;
     process(tab, index, buffer, token, ")", "symbol", filewrtr, filepntr); 
+
+    // the type column in symbol table will be the class name of that object 
+    // (thus if we declare "var Square square;" then "square.run()" is "Square.run()")
+    char *type = typeOf(subroutineName, firstTable);
+    writeCall(filewrtr, type, subroutineName2, &argcounter);
+    int zero = 0;
+    writePop(filewrtr, "temp", &zero);
+
+    free(subroutineName);
+    free(subroutineName2);
+  }
+  // If it is not a method
+  else if (strcmp(token_type, "identifier") == 0 && next_token[0] == '.' && strcmp(vmSegment, "NONE") == 0) {
+    advance(index, filepntr, buffer, token);
+    token_type = process(tab, index, buffer, token, ".", "symbol", filewrtr, filepntr); 
+
+    char *subroutineName2 = calloc(1, strlen(token) + 1);
+    strcpy(subroutineName2, token);
+
+    advance(index, filepntr, buffer, token);
+    token_type = process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr); 
+
+    int argcounter = compileExpressionList(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
+    token_type = process(tab, index, buffer, token, ")", "symbol", filewrtr, filepntr); 
+
     writeCall(filewrtr, subroutineName, subroutineName2, &argcounter);
+    int zero = 0;
+    writePop(filewrtr, "temp", &zero);
+
     free(subroutineName);
     free(subroutineName2);
   }
@@ -553,7 +597,7 @@ void compileDo(int *tab, int *index, char *buffer, char *token, char *nameOfClas
   free(next_token);
 }
 
-void compileReturn(int *tab, int *index, char *buffer, char *token, char *nameOfClass, FILE *filewrtr, FILE *filepntr, node **hashTable) {
+void compileReturn(int *tab, int *index, char *buffer, char *token, char *nameOfClass, FILE *filewrtr, FILE *filepntr, tableNode *firstTable) {
   char *token_type = NULL;
 
   // 'return'
@@ -561,7 +605,7 @@ void compileReturn(int *tab, int *index, char *buffer, char *token, char *nameOf
 
   // expression?
   if (termCheck(token, token_type)) {
-    compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, hashTable);
+    compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
   }
   else {
     int vmIndex = 0;
@@ -573,25 +617,24 @@ void compileReturn(int *tab, int *index, char *buffer, char *token, char *nameOf
   process(tab, index, buffer, token, ";", "symbol", filewrtr, filepntr);
 }
 
-void compileExpression(int *tab, int *index, char *buffer, char *token, char *token_type, char *nameOfClass, FILE *filewrtr, FILE *filepntr, node **hashTable) {
+void compileExpression(int *tab, int *index, char *buffer, char *token, char *token_type, char *nameOfClass, FILE *filewrtr, FILE *filepntr, tableNode *firstTable) {
 
   // term
-  token_type = compileTerm(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, hashTable);
+  token_type = compileTerm(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
 
   // (op term)*
   while (opCheck(token)) {
     char *operator = calloc(1, strlen(token) + 2);
     strcpy(operator, token);
     strcat(operator, " ");
-    printf("%s\n", operator);
     token_type = advance(index, filepntr, buffer, token);
-    compileTerm(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, hashTable);
+    compileTerm(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
     writeArithmetic(filewrtr, operator);
     free(operator);
   }
 }
 
-char *compileTerm(int *tab, int *index, char *buffer, char *token, char *token_type, char *nameOfClass, FILE *filewrtr, FILE *filepntr, node **hashTable) {
+char *compileTerm(int *tab, int *index, char *buffer, char *token, char *token_type, char *nameOfClass, FILE *filewrtr, FILE *filepntr, tableNode *firstTable) {
 
   char *next_token = tokenLookAhead(index, filepntr, buffer);
   char *subroutineName = calloc(1, strlen(token) + 1);
@@ -626,19 +669,23 @@ char *compileTerm(int *tab, int *index, char *buffer, char *token, char *token_t
       writePush(filewrtr, "constant", &one);
       writeArithmetic(filewrtr, "-");
     }
+    else if(strcmp(token, "this") == 0) {
+      int zero = 0;
+      writePush(filewrtr, "pointer", &zero);
+    }
     token_type = advance(index, filepntr, buffer, token);
   }
   // varName '[' Expression ]'
   else if (strcmp(token_type, "identifier") == 0 && next_token[0] == '[') {
     advance(index, filepntr, buffer, token);
     token_type = process(tab, index, buffer, token, "[", "symbol", filewrtr, filepntr);
-    compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, hashTable);
+    compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
     token_type = process(tab, index, buffer, token, "]", "symbol", filewrtr, filepntr);
   }
   // '(' Expression ')'
   else if (strcmp(token, "(") == 0) {
     token_type = process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr);
-    compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, hashTable);
+    compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
     token_type = process(tab, index, buffer, token, ")", "symbol", filewrtr, filepntr);
   }
   // Unary op
@@ -646,7 +693,7 @@ char *compileTerm(int *tab, int *index, char *buffer, char *token, char *token_t
     char *operator = calloc(1, strlen(token) + 1);
     strcpy(operator, token);
     token_type = advance(index, filepntr, buffer, token);
-    token_type = compileTerm(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, hashTable);
+    token_type = compileTerm(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
     writeArithmetic(filewrtr, operator);
     free(operator);
   }
@@ -654,9 +701,9 @@ char *compileTerm(int *tab, int *index, char *buffer, char *token, char *token_t
   else if (strcmp(token_type, "identifier") == 0 && next_token[0] == '(') {
     advance(index, filepntr, buffer, token);
     token_type = process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr);
-    compileExpressionList(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, hashTable);
+    compileExpressionList(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
     token_type = process(tab, index, buffer, token, ")", "symbol", filewrtr, filepntr); 
-    int argcounter = varCount("arg", hashTable);
+    int argcounter = varCount("arg", firstTable);
     writeCall(filewrtr, nameOfClass, subroutineName, &argcounter);
     free(subroutineName);
   }
@@ -667,15 +714,15 @@ char *compileTerm(int *tab, int *index, char *buffer, char *token, char *token_t
     strcpy(subroutineName2, token);
     advance(index, filepntr, buffer, token);
     token_type = process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr); 
-    int argcounter = compileExpressionList(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, hashTable);
+    int argcounter = compileExpressionList(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
     token_type = process(tab, index, buffer, token, ")", "symbol", filewrtr, filepntr); 
     writeCall(filewrtr, subroutineName, subroutineName2, &argcounter);
     free(subroutineName2);
   }
   // varName
   else if (strcmp(token_type, "identifier") == 0) {
-    char *vmSegment = kindOf(token, hashTable);
-    int vmIndex = indexOf(token, hashTable);
+    char *vmSegment = kindOf(token, firstTable);
+    int vmIndex = indexOf(token, firstTable);
     writePush(filewrtr, vmSegment, &vmIndex);
     token_type = advance(index, filepntr, buffer, token);
   }
@@ -685,17 +732,17 @@ char *compileTerm(int *tab, int *index, char *buffer, char *token, char *token_t
   return token_type;
 }
 
-int compileExpressionList(int *tab, int *index, char *buffer, char *token, char *token_type, char *nameOfClass, FILE *filewrtr, FILE *filepntr, node **hashTable) {
+int compileExpressionList(int *tab, int *index, char *buffer, char *token, char *token_type, char *nameOfClass, FILE *filewrtr, FILE *filepntr, tableNode *firstTable) {
 
   int argcounter = 0;
 
   // (expression (',' expression)*)?
   if (termCheck(token, token_type)) {
-    compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, hashTable);
+    compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
     argcounter++;
     while (token[0] == ',') {
       token_type = process(tab, index, buffer, token, ",", "symbol", filewrtr, filepntr);
-      compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, hashTable);
+      compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
       argcounter++;
     }
   }
