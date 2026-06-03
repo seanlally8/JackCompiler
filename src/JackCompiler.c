@@ -4,6 +4,8 @@
 #include <dirent.h>
 #include "JackTokenizer.h"
 #include "helper.h"
+#include "VMWriter.h"
+#include "SymbolTable.h"
 #include "CompilationEngine.h"
 
 int main(int argc, char *argv[]) {
@@ -17,12 +19,17 @@ int main(int argc, char *argv[]) {
   // Meaningful var name for program input
   char *inputname = argv[1];
 
-  // buffer holds current line from .jack file
-  // token holds the current token
-  // new_path is for writing the output files into an output directory
-  char *buffer = calloc(200, sizeof(char));
-  char *token = calloc(200, sizeof(char));
-  char *new_path = calloc(200, sizeof(char));
+  char *buffer = calloc(200, sizeof(char)); // buffer holds current line from .jack file
+  char *token = calloc(200, sizeof(char));  // token holds the current token
+  char *new_path = calloc(200, sizeof(char));  // new_path is for writing the output files into an output directory
+
+  // Init linked list
+  labelNode *labelList = NULL;
+  labelNode *n = calloc(1, sizeof(labelNode));
+  n->label1 = 1;
+  n->label2 = 2;
+  n->next = NULL;
+  labelList = n;
 
   // Declare node to build linked list for multiple files in a directory
   typedef struct node {
@@ -56,6 +63,9 @@ int main(int argc, char *argv[]) {
     DIR *dir = opendir(inputname);
     if (dir == NULL) {
       printf("Not a directory\n");
+      free(buffer);
+      free(token);
+      free(new_path);
       return 1;
     }
     struct dirent *file;
@@ -104,8 +114,8 @@ int main(int argc, char *argv[]) {
     }
 
     // Name output file (and place in 'output/') then open for writing
-    char *xmlfile = nameOutputFile(iterator->filename, new_path);
-    FILE *filewrtr = fopen(xmlfile, "w");
+    char *vmfile = nameOutputFile(iterator->filename, new_path);
+    FILE *filewrtr = fopen(vmfile, "w");
     if (filewrtr == NULL) {
       printf("Could not open .xml file");
       return 1;
@@ -116,7 +126,7 @@ int main(int argc, char *argv[]) {
     advance(&index, filepntr, buffer, token);
 
     // Recursively compile the current file
-    compileClass(&tab, &index, buffer, token, filewrtr, filepntr);
+    compileClass(&tab, &index, buffer, token, filewrtr, filepntr, labelList);
 
     // Close current files and zero out buffers for clean writes
     fclose (filepntr);
@@ -128,6 +138,7 @@ int main(int argc, char *argv[]) {
   free(buffer);
   free(token);
   free(new_path);
+  free(labelList);
 
   node *ptr = head;
 

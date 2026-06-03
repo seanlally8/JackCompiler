@@ -18,5 +18,6 @@ int keywordConstantCheck(char *token);
 int termCheck(char *token, char *token_type);
 int fileCheck(char *inputname);
 void zeroBuffers(char *token, char *buffer, char *new_path);
+int getCharCode(char character);
 
 #endif // ends the #ifndef block

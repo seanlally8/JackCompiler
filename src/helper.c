@@ -39,7 +39,7 @@ void skipToEndOfComment(char *buffer, int *index, FILE *filepntr) {
 
 char *nameOutputFile(char *inputname, char *new_path) {
   // input is path/to/file.jack 
-  // output is path/to/output/file.xml
+  // output is path/to/output/file.vm
   int new_index = 0;
   int slash_index = 0;
 
@@ -58,7 +58,7 @@ char *nameOutputFile(char *inputname, char *new_path) {
         new_path[new_index] = inputname[n];
         new_index++;
       }
-      strcat(new_path, "xml");
+      strcat(new_path, "vm");
     }
   }
   return new_path;
@@ -69,8 +69,9 @@ char *process(int *tab, int *index, char *buffer, char *token, char *expected_to
   // Checks to make sure current token is same as expected token given the grammatical rule
   // Then prints xml tags
   // Then advances to next token and returns token_type of new token
+  (void)token_type;
+  (void)filewrtr;
   if (strcmp(token, expected_token) == 0) {
-    printXMLToken(tab, expected_token, token_type, filewrtr);
   } 
   else {
     printf("Syntax Error in process: level: %i, token: %s, expected_token: %s\n", *tab, token, expected_token);
@@ -165,4 +166,22 @@ void zeroBuffers(char *token, char *buffer, char *new_path) {
   memset(buffer, 0, 200);
   memset(new_path, 0, 200);
   return;
+}
+
+int getCharCode(char character) {
+  char characterSet[95] = {
+    ' ', '!', '"', '#', '$', '%', '&', '"', '(', ')', '*', '+', ',', '-', '.', '/',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<', '=', '>', '?', '@',
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
+    'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '[', '\\', ']', '^', '_', '`',
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q',
+    'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '{', '|', '}', '~'
+};
+
+  for (int i = 0; i < 95; i++) {
+    if (characterSet[i] == character) {
+      return i + 32;
+    }
+  }
+  return -1;
 }
