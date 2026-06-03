@@ -33,6 +33,9 @@ void writeArithmetic(FILE *filewrtr, char *operator) {
   else if (strcmp(operator, "&gt; ") == 0) {
     fputs("\tgt\n", filewrtr);
   }
+  else if (strcmp(operator, "&lt; ") == 0) {
+    fputs("\tlt\n", filewrtr);
+  }
   else if (strcmp(operator, "= ") == 0) {
     fputs("\teq\n", filewrtr);
   }

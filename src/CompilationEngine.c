@@ -175,7 +175,7 @@ void compileSubroutine(int *tab, int *index, char *buffer, char *token, char *na
   compileSubroutineBody(tab, index, buffer, token, nameOfClass, subroutineName, filewrtr, filepntr, labelList, firstTable);
 
   // Print subroutine symbol table to stdout
-  printf("SUBROUTINE TABLE\n");
+  printf("SUBROUTINE TABLE, %s\n", subroutineName);
   printTable(firstTable);
   printf("-------------\n");
 
@@ -262,6 +262,7 @@ void compileSubroutineBody(int *tab, int *index, char *buffer, char *token, char
 
   // Code generator
   varcounter = varCount("local", firstTable);
+  int zero = 0;
   writeFunction(filewrtr, nameOfClass, subroutineName, &varcounter);
   printf("#######%s\n", firstTable->nextTable->tableType);
   if (strcmp(firstTable->nextTable->tableType, "constructor") == 0) {
@@ -269,8 +270,11 @@ void compileSubroutineBody(int *tab, int *index, char *buffer, char *token, char
     writePush(filewrtr, "constant", &varcounter);
     int nArg = 1;
     writeCall(filewrtr, "Memory", "alloc", &nArg);
-    int this = 0;
-    writePop(filewrtr, "pointer", &this);
+    writePop(filewrtr, "pointer", &zero);
+  }
+  else if (strcmp(firstTable->nextTable->tableType, "method") == 0) {
+    writePush(filewrtr, "argument", &zero);
+    writePop(filewrtr, "pointer", &zero);
   }
 
   // Implementation of statements rule
