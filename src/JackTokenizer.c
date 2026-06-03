@@ -118,7 +118,7 @@ int extractKeyword(int *index, char *token, char *buffer) {
       token[temp_index] = buffer[m];
       temp_index++;
     }
-    if (strcmp(token, Keywords[k]) == 0) {
+    if (strcmp(token, Keywords[k]) == 0 && buffer[m+1] == '\0') {
       *index = m;
       return 1;
     }

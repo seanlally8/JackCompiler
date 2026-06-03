@@ -6,6 +6,7 @@
 #include "SymbolTable.h"
 #include "VMWriter.h"
 #include "CompilationEngine.h"
+#include "helper.h"
 
 void compileClass(int *tab, int *index, char *buffer, char *token, FILE *filewrtr, FILE *filepntr, labelNode *labelList) {
 
@@ -264,7 +265,6 @@ void compileSubroutineBody(int *tab, int *index, char *buffer, char *token, char
   varcounter = varCount("local", firstTable);
   int zero = 0;
   writeFunction(filewrtr, nameOfClass, subroutineName, &varcounter);
-  printf("#######%s\n", firstTable->nextTable->tableType);
   if (strcmp(firstTable->nextTable->tableType, "constructor") == 0) {
     varcounter = varCount("field", firstTable);
     writePush(filewrtr, "constant", &varcounter);
@@ -393,18 +393,32 @@ void compileLet(int *tab, int *index, char *buffer, char *token, char *nameOfCla
   // ('[' expression ']')?
   if (strcmp(token, "[") == 0) {
     token_type = process(tab, index, buffer, token, "[", "symbol", filewrtr, filepntr);
-
+    writePush(filewrtr, vmSegment, &vmIndex);
     compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
+    writeArithmetic(filewrtr, "+ ");
+    int one = 1;
+    writePop(filewrtr, "temp", &one);
 
     token_type = process(tab, index, buffer, token, "]", "symbol", filewrtr, filepntr);
+
+    // '='
+    token_type = process(tab, index, buffer, token, "=", "symbol", filewrtr, filepntr);
+
+    // expression
+    compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
+    writePush(filewrtr, "temp",  &one);
+    writePop(filewrtr, "pointer", &one);
+    int zero = 0;
+    writePop(filewrtr, "that", &zero);
   }
+  else {
+    // '='
+    token_type = process(tab, index, buffer, token, "=", "symbol", filewrtr, filepntr);
 
-  // '='
-  token_type = process(tab, index, buffer, token, "=", "symbol", filewrtr, filepntr);
-
-  // expression
-  compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
-  writePop(filewrtr, vmSegment, &vmIndex);
+    // expression
+    compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
+    writePop(filewrtr, vmSegment, &vmIndex);
+  }
 
   // ';'
   process(tab, index, buffer, token, ";", "symbol", filewrtr, filepntr);
@@ -641,6 +655,7 @@ void compileExpression(int *tab, int *index, char *buffer, char *token, char *to
 char *compileTerm(int *tab, int *index, char *buffer, char *token, char *token_type, char *nameOfClass, FILE *filewrtr, FILE *filepntr, tableNode *firstTable) {
 
   char *next_token = tokenLookAhead(index, filepntr, buffer);
+  char *vmSegment = kindOf(token, firstTable);
   char *subroutineName = calloc(1, strlen(token) + 1);
   strcpy(subroutineName, token);
   
@@ -656,6 +671,16 @@ char *compileTerm(int *tab, int *index, char *buffer, char *token, char *token_t
   }
   // stringConstant
   else if (strcmp(token_type, "stringConstant") == 0) {
+    int stringLength = (int)strlen(token);
+    writePush(filewrtr, "constant", &stringLength);
+    int one = 1;
+    writeCall(filewrtr, "String", "new", &one);
+    for (int i = 0; i < (int)strlen(token); i++) {
+      int charCode = getCharCode(token[i]); 
+      writePush(filewrtr, "constant", &charCode);
+      int two = 2;
+      writeCall(filewrtr, "String", "appendChar", &two);
+    }
     token_type = advance(index, filepntr, buffer, token);
   }
   // true | false | null | this
@@ -681,10 +706,23 @@ char *compileTerm(int *tab, int *index, char *buffer, char *token, char *token_t
   }
   // varName '[' Expression ]'
   else if (strcmp(token_type, "identifier") == 0 && next_token[0] == '[') {
+    // push symbol mapping of varName
+    char *vmSegment = kindOf(token, firstTable);
+    int vmIndex = indexOf(token, firstTable);
+    writePush(filewrtr, vmSegment, &vmIndex);
+
     advance(index, filepntr, buffer, token);
     token_type = process(tab, index, buffer, token, "[", "symbol", filewrtr, filepntr);
     compileExpression(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
     token_type = process(tab, index, buffer, token, "]", "symbol", filewrtr, filepntr);
+
+    // after the expression writes the appropriate push commands, add the top two stack items and pop to 
+    // pointer 1 (this is the address of the identified index)
+    writeArithmetic(filewrtr, "+ ");
+    int one = 1;
+    int zero = 0;
+    writePop(filewrtr, "pointer",  &one);
+    writePush(filewrtr, "that", &zero);
   }
   // '(' Expression ')'
   else if (strcmp(token, "(") == 0) {
@@ -703,24 +741,63 @@ char *compileTerm(int *tab, int *index, char *buffer, char *token, char *token_t
   }
   // subroutineCall
   else if (strcmp(token_type, "identifier") == 0 && next_token[0] == '(') {
+    // Push mapping of 'this'
+    int zero = 0;
+    writePush(filewrtr, "pointer", &zero);
+
     advance(index, filepntr, buffer, token);
     token_type = process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr);
-    compileExpressionList(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
-    token_type = process(tab, index, buffer, token, ")", "symbol", filewrtr, filepntr); 
-    int argcounter = varCount("arg", firstTable);
+
+    int argcounter = compileExpressionList(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
+    argcounter++;
+    process(tab, index, buffer, token, ")", "symbol", filewrtr, filepntr); 
+
     writeCall(filewrtr, nameOfClass, subroutineName, &argcounter);
+
     free(subroutineName);
   }
-  else if (strcmp(token_type, "identifier") == 0 && next_token[0] == '.') {
+  // If it is a method
+  else if (strcmp(token_type, "identifier") == 0 && next_token[0] == '.' && strcmp(vmSegment, "NONE") != 0) {
+    // push varName index
+    int vmIndex = indexOf(token, firstTable);
+    writePush(filewrtr, vmSegment, &vmIndex);
+
     advance(index, filepntr, buffer, token);
     token_type = process(tab, index, buffer, token, ".", "symbol", filewrtr, filepntr); 
+
     char *subroutineName2 = calloc(1, strlen(token) + 1);
     strcpy(subroutineName2, token);
+
     advance(index, filepntr, buffer, token);
     token_type = process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr); 
+
+    int argcounter = compileExpressionList(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
+    argcounter++;
+    process(tab, index, buffer, token, ")", "symbol", filewrtr, filepntr); 
+
+    // the type column in symbol table will be the class name of that object 
+    // (thus if we declare "var Square square;" then "square.run()" is "Square.run()")
+    char *type = typeOf(subroutineName, firstTable);
+    writeCall(filewrtr, type, subroutineName2, &argcounter);
+
+    free(subroutineName2);
+  }
+  // If it is not a method
+  else if (strcmp(token_type, "identifier") == 0 && next_token[0] == '.' && strcmp(vmSegment, "NONE") == 0) {
+    advance(index, filepntr, buffer, token);
+    token_type = process(tab, index, buffer, token, ".", "symbol", filewrtr, filepntr); 
+
+    char *subroutineName2 = calloc(1, strlen(token) + 1);
+    strcpy(subroutineName2, token);
+
+    advance(index, filepntr, buffer, token);
+    token_type = process(tab, index, buffer, token, "(", "symbol", filewrtr, filepntr); 
+
     int argcounter = compileExpressionList(tab, index, buffer, token, token_type, nameOfClass, filewrtr, filepntr, firstTable);
     token_type = process(tab, index, buffer, token, ")", "symbol", filewrtr, filepntr); 
+
     writeCall(filewrtr, subroutineName, subroutineName2, &argcounter);
+
     free(subroutineName2);
   }
   // varName

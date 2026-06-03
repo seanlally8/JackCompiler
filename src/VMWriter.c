@@ -21,6 +21,9 @@ void writeArithmetic(FILE *filewrtr, char *operator) {
   else if (strcmp(operator, "* ") == 0) {
     fputs("\tcall Math.multiply 2\n", filewrtr);
   }
+  else if (strcmp(operator, "/ ") == 0) {
+    fputs("\tcall Math.divide 2\n", filewrtr);
+  }
   else if (strcmp(operator, "-") == 0) {
     fputs("\tneg\n", filewrtr);
   }
@@ -41,6 +44,9 @@ void writeArithmetic(FILE *filewrtr, char *operator) {
   }
   else if (strcmp(operator, "&amp; ") == 0) {
     fputs("\tand\n", filewrtr);
+  }
+  else if (strcmp(operator, "| ") == 0) {
+    fputs("\tor\n", filewrtr);
   }
 }
 
