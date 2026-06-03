@@ -1,5 +1,5 @@
 # JackCompiler
-This is a compiler written for a 'toy language' called Jack, developed for the nand2tetris course. 
+This is a compiler written for a 'toy language' called Jack, developed for the [nand2tetris course](https://www.nand2tetris.org/). 
 I followed the APIs provided by The Elements of Computing Systems by Noam Nisan and Shimon Shocken.
 
 It has successfully passed the unit tests given in the book, but I have not done any further optimization.
