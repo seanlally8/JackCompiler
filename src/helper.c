@@ -47,7 +47,7 @@ char *nameOutputFile(char *inputname, char *new_path) {
     if (inputname[i] == '/') {
       slash_index = i;
     }
-    else if (inputname[i] == '\0') {
+    else if (inputname[i] == '\0' && slash_index != 0) {
       for (int m = 0; m < slash_index + 1; m++) {
         new_path[m] = inputname[m];
       }
@@ -55,6 +55,16 @@ char *nameOutputFile(char *inputname, char *new_path) {
       mkdir(new_path, S_IRWXU);
       new_index = (int)strlen(new_path);
       for (int n = slash_index + 1; n < (int)strlen(inputname) - 4; n++) {
+        new_path[new_index] = inputname[n];
+        new_index++;
+      }
+      strcat(new_path, "vm");
+    }
+    else if (inputname[i] == '\0' && slash_index == 0) {
+      strcat(new_path, "output/");
+      mkdir(new_path, S_IRWXU);
+      new_index = (int)strlen(new_path);
+      for (int n = slash_index; n < (int)strlen(inputname) - 4; n++) {
         new_path[new_index] = inputname[n];
         new_index++;
       }
