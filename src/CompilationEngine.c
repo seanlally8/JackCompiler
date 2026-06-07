@@ -754,7 +754,6 @@ char *compileTerm(int *tab, int *index, char *buffer, char *token, char *token_t
 
     writeCall(filewrtr, nameOfClass, subroutineName, &argcounter);
 
-    free(subroutineName);
   }
   // If it is a method
   else if (strcmp(token_type, "identifier") == 0 && next_token[0] == '.' && strcmp(vmSegment, "NONE") != 0) {
